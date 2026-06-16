@@ -16,12 +16,9 @@ export default function KetcherEditor({ onInit }: KetcherEditorProps) {
       <Editor
         staticResourcesUrl={""}
         structServiceProvider={structServiceProvider}
+        errorHandler={(err: any) => console.error(err)} // Add this line
         onInit={(ketcher) => {
-          console.log("Ketcher Initialized!");
-          window.ketcher = ketcher; // Keep as fallback
-          if (onInit) {
-            onInit(ketcher); // Pass instance to parent
-          }
+          // ... your existing code
         }}
       />
     </div>

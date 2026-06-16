@@ -648,7 +648,8 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
             ).length;
             
             const getVName = `${currentBaseName} Variant #${sameCompoundCount + 1}`;
-            return selectedCompound ? [...prev, { ...evaluatedPredictionObj, name: selectedCompound.name }] 
+            return selectedCompound 
+            ? [...prev, { ...evaluatedPredictionObj, name: selectedCompound.name }] 
             : prev;
           }
           return prev;
