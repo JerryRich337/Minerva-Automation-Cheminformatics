@@ -1,0 +1,79 @@
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { createUserWithEmailAndPassword } from "firebase/auth";
+import { auth } from "@/lib/firebase";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+
+export default function RegisterPage() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const router = useRouter();
+
+  const handleRegister = async (e: React.FormEvent) => {
+    e.preventDefault(); // Prevents the page from refreshing
+    setError(""); // Clears any old errors
+    
+    try {
+      // This is the magic line that tells Firebase to make a new user
+      await createUserWithEmailAndPassword(auth, email, password);
+      
+      // If it works, send them immediately to the dashboard!
+      router.push("/dashboard/default");
+    } catch (err: any) {
+      // If Firebase rejects it (e.g., password too short), show the error
+      setError(err.message);
+    }
+  };
+
+  return (
+    <div className="flex min-h-screen flex-col items-center justify-center bg-background">
+      <div className="w-full max-w-[400px] space-y-6 rounded-lg border p-6 shadow-md">
+        <div className="space-y-2 text-center">
+          <h1 className="text-3xl font-bold">Create an Account</h1>
+          <p className="text-muted-foreground">Enter your details below to get started</p>
+        </div>
+        
+        <form onSubmit={handleRegister} className="space-y-4">
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Email</label>
+            <input 
+              type="email" 
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              className="flex h-10 w-full rounded-md border bg-transparent px-3 py-2 text-sm"
+              placeholder="name@example.com"
+            />
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Password</label>
+            <input 
+              type="password" 
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              className="flex h-10 w-full rounded-md border bg-transparent px-3 py-2 text-sm"
+              placeholder="Minimum 6 characters"
+            />
+          </div>
+          
+          {/* If there is an error, show it here in red */}
+          {error && <p className="text-sm text-red-500">{error}</p>}
+          
+          <Button type="submit" className="w-full">Sign Up</Button>
+        </form>
+        
+        <div className="text-center text-sm">
+          Already have an account?{" "}
+          <Link href="/login" className="underline hover:text-primary">
+            Log in
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
+}
