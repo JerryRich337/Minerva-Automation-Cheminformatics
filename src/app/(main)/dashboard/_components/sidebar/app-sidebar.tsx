@@ -6,7 +6,7 @@ import { CircleHelp, ClipboardList, Command, Database, File, Search, Settings } 
 import { useShallow } from "zustand/react/shallow";
 
 import {
-  Sidebar,
+  type Sidebar,
   SidebarContent,
   SidebarFooter,
   SidebarHeader,

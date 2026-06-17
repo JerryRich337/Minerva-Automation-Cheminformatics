@@ -55,45 +55,46 @@ export const sidebarItems: NavGroup[] = [
         icon: LayoutDashboard,
       },
       // 👇 THE MAGIC TRICK: Hidden in production, visible in localhost 👇
-      ...(process.env.NODE_ENV === "development" ? [
-          {
-            title: "CRM",
-            url: "/dashboard/crm",
-            icon: ChartBar,
-          },
-          {
-            title: "Finance",
-            url: "/dashboard/finance",
-            icon: Banknote,
-          },
-          {
-            title: "Analytics",
-            url: "/dashboard/analytics",
-            icon: Gauge,
-          },
-          {
-            title: "Productivity",
-            url: "/dashboard/productivity",
-            icon: ListTodo,
-          },
-          {
-            title: "E-commerce",
-            url: "/dashboard/ecommerce",
-            icon: ShoppingBag,
-          },
-          {
-            title: "Academy",
-            url: "/dashboard/academy",
-            icon: GraduationCap,
-            isNew: true,
-          },
-          {
-            title: "Logistics",
-            url: "/dashboard/logistics",
-            icon: Forklift,
-          },
-        ]
-      : []),
+      ...(process.env.NODE_ENV === "development"
+        ? [
+            {
+              title: "CRM",
+              url: "/dashboard/crm",
+              icon: ChartBar,
+            },
+            {
+              title: "Finance",
+              url: "/dashboard/finance",
+              icon: Banknote,
+            },
+            {
+              title: "Analytics",
+              url: "/dashboard/analytics",
+              icon: Gauge,
+            },
+            {
+              title: "Productivity",
+              url: "/dashboard/productivity",
+              icon: ListTodo,
+            },
+            {
+              title: "E-commerce",
+              url: "/dashboard/ecommerce",
+              icon: ShoppingBag,
+            },
+            {
+              title: "Academy",
+              url: "/dashboard/academy",
+              icon: GraduationCap,
+              isNew: true,
+            },
+            {
+              title: "Logistics",
+              url: "/dashboard/logistics",
+              icon: Forklift,
+            },
+          ]
+        : []),
     ],
   },
   {

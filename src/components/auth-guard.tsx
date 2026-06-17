@@ -1,8 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
+
 import { useRouter } from "next/navigation";
+
 import { onAuthStateChanged } from "firebase/auth";
+
 import { auth } from "@/lib/firebase";
 
 export default function AuthGuard({ children }: { children: React.ReactNode }) {
@@ -34,8 +37,8 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
     );
   }
 
-  // CRITICAL FIX: If they are not authenticated, return null. 
-  // This prevents the dashboard layout from rendering a flash of content 
+  // CRITICAL FIX: If they are not authenticated, return null.
+  // This prevents the dashboard layout from rendering a flash of content
   // or crashing while the router is actively pushing them to /login.
   if (!isAuthenticated) {
     return null;

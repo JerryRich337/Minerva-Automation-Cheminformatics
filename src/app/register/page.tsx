@@ -1,11 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { createUserWithEmailAndPassword } from "firebase/auth";
-import { auth } from "@/lib/firebase";
+
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+
+import { createUserWithEmailAndPassword } from "firebase/auth";
+
 import { Button } from "@/components/ui/button";
+import { auth } from "@/lib/firebase";
 
 export default function RegisterPage() {
   const [email, setEmail] = useState("");
@@ -16,11 +19,11 @@ export default function RegisterPage() {
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault(); // Prevents the page from refreshing
     setError(""); // Clears any old errors
-    
+
     try {
       // This is the magic line that tells Firebase to make a new user
       await createUserWithEmailAndPassword(auth, email, password);
-      
+
       // If it works, send them immediately to the dashboard!
       router.push("/dashboard/default");
     } catch (err: any) {
@@ -36,12 +39,12 @@ export default function RegisterPage() {
           <h1 className="text-3xl font-bold">Create an Account</h1>
           <p className="text-muted-foreground">Enter your details below to get started</p>
         </div>
-        
+
         <form onSubmit={handleRegister} className="space-y-4">
           <div className="space-y-2">
             <label className="text-sm font-medium">Email</label>
-            <input 
-              type="email" 
+            <input
+              type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
@@ -51,8 +54,8 @@ export default function RegisterPage() {
           </div>
           <div className="space-y-2">
             <label className="text-sm font-medium">Password</label>
-            <input 
-              type="password" 
+            <input
+              type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
@@ -60,13 +63,15 @@ export default function RegisterPage() {
               placeholder="Minimum 6 characters"
             />
           </div>
-          
+
           {/* If there is an error, show it here in red */}
           {error && <p className="text-sm text-red-500">{error}</p>}
-          
-          <Button type="submit" className="w-full">Sign Up</Button>
+
+          <Button type="submit" className="w-full">
+            Sign Up
+          </Button>
         </form>
-        
+
         <div className="text-center text-sm">
           Already have an account?{" "}
           <Link href="/login" className="underline hover:text-primary">

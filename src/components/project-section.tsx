@@ -1,16 +1,14 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
+
 import { useRouter } from "next/navigation";
-import { Plus, Search, Folder, MoreVertical, Trash2, Share2 } from "lucide-react";
+
 import { onAuthStateChanged } from "firebase/auth";
-import { collection, addDoc, query, where, onSnapshot, orderBy, doc, deleteDoc } from "firebase/firestore";
-import { auth, db } from "@/lib/firebase";
+import { addDoc, collection, deleteDoc, doc, onSnapshot, orderBy, query, where } from "firebase/firestore";
+import { Folder, MoreVertical, Plus, Search, Share2, Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
 import {
   Dialog,
   DialogContent,
@@ -26,6 +24,10 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { auth, db } from "@/lib/firebase";
 
 interface Project {
   id: string;
@@ -45,12 +47,8 @@ export function ProjectSection() {
     const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
       if (user) {
         setUserId(user.uid);
-        
-        const q = query(
-          collection(db, "projects"),
-          where("userId", "==", user.uid),
-          orderBy("createdAt", "desc")
-        );
+
+        const q = query(collection(db, "projects"), where("userId", "==", user.uid), orderBy("createdAt", "desc"));
 
         const unsubscribeSnapshot = onSnapshot(q, (snapshot) => {
           const projectList: Project[] = [];
@@ -108,7 +106,7 @@ export function ProjectSection() {
     <div className="flex flex-col gap-4 rounded-xl border bg-card p-6 text-card-foreground shadow-xs">
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-semibold tracking-tight">Projects</h2>
-        
+
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
             <Button size="sm" className="gap-1 cursor-pointer">
@@ -116,36 +114,32 @@ export function ProjectSection() {
               New Project
             </Button>
           </DialogTrigger>
-          
+
           <DialogContent className="sm:max-w-[500px]">
             <DialogHeader>
               <DialogTitle>Create New Project</DialogTitle>
-              <DialogDescription>
-                Enter the details below to initialize a new project workspace.
-              </DialogDescription>
+              <DialogDescription>Enter the details below to initialize a new project workspace.</DialogDescription>
             </DialogHeader>
-            
+
             <div className="grid gap-4 py-4">
               <div className="grid gap-2">
                 <Label htmlFor="name">Project Name</Label>
-                <Input 
-                  id="name" 
+                <Input
+                  id="name"
                   value={projectName}
                   onChange={(e) => setProjectName(e.target.value)}
-                  placeholder="e.g., Kinase Inhibitor Screen" 
+                  placeholder="e.g., Kinase Inhibitor Screen"
                 />
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="description">Description</Label>
-                <Textarea 
-                  id="description" 
+                <Textarea
+                  id="description"
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Briefly describe the project goals..." 
+                  placeholder="Briefly describe the project goals..."
                 />
               </div>
-              
-              
             </div>
 
             <DialogFooter className="gap-2 sm:gap-0">
@@ -159,7 +153,7 @@ export function ProjectSection() {
           </DialogContent>
         </Dialog>
       </div>
-      
+
       {projects.length === 0 ? (
         <div className="flex h-32 items-center justify-center rounded-lg border border-dashed bg-muted/20">
           <p className="text-sm text-muted-foreground">No projects yet. Click "New Project" to start.</p>
@@ -167,7 +161,7 @@ export function ProjectSection() {
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {projects.map((project) => (
-            <div 
+            <div
               key={project.id}
               onClick={() => router.push(`/dashboard/projects/${project.id}`)}
               className="group relative flex flex-col gap-2 rounded-xl border bg-card p-4 shadow-xs transition-all hover:border-primary/50 hover:shadow-md cursor-pointer"
@@ -179,14 +173,14 @@ export function ProjectSection() {
                   </div>
                   <h3 className="font-medium text-sm truncate">{project.name}</h3>
                 </div>
-                
+
                 {/* The new Kebab Menu */}
                 <div onClick={(e) => e.stopPropagation()}>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
+                      <Button
+                        variant="ghost"
+                        size="icon"
                         className="h-8 w-8 -mr-2 -mt-1 opacity-0 group-hover:opacity-100 transition-opacity focus:opacity-100 data-[state=open]:opacity-100"
                       >
                         <MoreVertical className="size-4" />
@@ -194,7 +188,7 @@ export function ProjectSection() {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="w-[160px]">
-                      <DropdownMenuItem 
+                      <DropdownMenuItem
                         onClick={(e) => {
                           e.stopPropagation();
                           handleDelete(project.id);
@@ -204,7 +198,7 @@ export function ProjectSection() {
                         <Trash2 className="mr-2 size-4" />
                         Delete
                       </DropdownMenuItem>
-                      <DropdownMenuItem 
+                      <DropdownMenuItem
                         onClick={(e) => {
                           e.stopPropagation();
                           handleShare(project.id);
@@ -220,9 +214,7 @@ export function ProjectSection() {
               </div>
 
               {project.description && (
-                <p className="text-xs text-muted-foreground line-clamp-2 pl-9">
-                  {project.description}
-                </p>
+                <p className="text-xs text-muted-foreground line-clamp-2 pl-9">{project.description}</p>
               )}
             </div>
           ))}

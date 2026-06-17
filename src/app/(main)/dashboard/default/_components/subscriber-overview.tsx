@@ -13,5 +13,5 @@ const customers = customersData as RecentCustomerRow[];
 
 export function SubscriberOverview() {
   // Return null so React knows there is nothing to render here
-  return null; 
+  return null;
 }
