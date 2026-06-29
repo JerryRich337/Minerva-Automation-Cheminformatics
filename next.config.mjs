@@ -1,6 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // 1. Universal Webpack overrides
+  // 1. Webpack setup
   webpack: (config, { webpack }) => {
     // Enable WebAssembly handling for Ketcher Standalone
     config.experiments = {
@@ -9,19 +9,18 @@ const nextConfig = {
       layers: true,
     };
 
-    // Completely ignore jsdom module resolution globally so 'paper' doesn't crash the build
-    config.resolve.fallback = {
-      ...config.resolve.fallback,
-      fs: false,
-      path: false,
-      crypto: false,
-      jsdom: false, // <-- This forces Webpack to treat any 'jsdom' import as an empty object
-    };
+    // Force Webpack to completely replace any reference to jsdom with an empty module stub
+    config.plugins.push(
+      new webpack.NormalModuleReplacementPlugin(
+        /^jsdom$/,
+        false // Evaluates to an empty object
+      )
+    );
 
     return config;
   },
 
-  // 2. Clear out the Turbopack check
+  // 2. Suppress Next.js 16 Turbopack strict gates
   turbopack: {}
 };
 
