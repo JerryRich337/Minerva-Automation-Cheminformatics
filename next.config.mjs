@@ -1,19 +1,15 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  allowedDevOrigins: ["172.20.96.1"],
-  reactCompiler: true,
-  compiler: {
-    removeConsole: process.env.NODE_ENV === "production",
-  },
-  webpack: (config, { isServer }) => {
-    // Enable WebAssembly for Ketcher's Cairo/Indigo engine
+  // 1. Force Webpack config adjustments
+  webpack: (config, { isServer, webpack }) => {
+    // Enable WebAssembly handling for Ketcher Standalone
     config.experiments = {
       ...config.experiments,
       asyncWebAssembly: true,
       layers: true,
     };
 
-    // Ignore Node-specific modules that crash the client browser
+    // ONLY on client-side builds, tell Webpack to mock or ignore server-side modules
     if (!isServer) {
       config.resolve.fallback = {
         ...config.resolve.fallback,
@@ -21,25 +17,20 @@ const nextConfig = {
         path: false,
         crypto: false,
       };
-    }
 
-    // Explicitly tell Webpack how to parse Ketcher's .wasm files
-    config.module.rules.push({
-      test: /\.wasm$/,
-      type: "webassembly/async",
-    });
+      // Tell Webpack to explicitly ignore jsdom requests made by the paper package
+      config.plugins.push(
+        new webpack.IgnorePlugin({
+          resourceRegExp: /^jsdom$/,
+        })
+      );
+    }
 
     return config;
   },
-  async redirects() {
-    return [
-      {
-        source: "/dashboard",
-        destination: "/dashboard/default",
-        permanent: false,
-      },
-    ];
-  },
+
+  // 2. Clear out the Turbopack check
+  turbopack: {}
 };
 
 export default nextConfig;
