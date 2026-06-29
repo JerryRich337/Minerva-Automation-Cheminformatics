@@ -27,8 +27,8 @@ import { db } from "@/lib/firebase";
 const KetcherEditor = dynamic(() => import("@/components/ketcher-editor"), {
   ssr: false,
   loading: () => (
-    <div className="w-full h-[500px] flex items-center justify-center bg-slate-50 border rounded-lg">
-      <span className="text-sm text-slate-500 animate-pulse">Loading Chemical Canvas Engine...</span>
+    <div className="flex h-full w-full items-center justify-center bg-muted/10">
+      <span className="text-sm text-muted-foreground animate-pulse">Loading Ketcher Engine...</span>
     </div>
   ),
 });

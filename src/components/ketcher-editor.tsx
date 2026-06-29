@@ -13,7 +13,7 @@ interface KetcherEditorProps {
 
 const KetcherEditor: React.FC<KetcherEditorProps> = ({ onInit }) => {
   return (
-    <div className="w-full h-full min-h-[500px] border rounded-lg overflow-hidden bg-white">
+    <div className="h-full w-full">
       <Editor
         staticResourcesUrl={process.env.NEXT_PUBLIC_STATIC_RESOURCES_URL || ""}
         structServiceProvider={structServiceProvider}
