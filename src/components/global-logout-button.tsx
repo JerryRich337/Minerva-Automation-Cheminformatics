@@ -17,7 +17,8 @@ export function GlobalLogoutButton() {
 
   useEffect(() => onAuthStateChanged(auth, setUser), []);
 
-  const isAuthPage = pathname === "/login" || pathname === "/register" || pathname.startsWith("/auth/");
+  const isAuthPage = pathname === "/" || pathname === "/login" || pathname === "/register" || pathname.startsWith("/auth/");
+
 
   if (!user || isAuthPage) {
     return null;
