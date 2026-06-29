@@ -1,8 +1,9 @@
+// ketcher-editor.tsx
 "use client";
-
-import { Editor } from "ketcher-react";
+import "@ketcher/react/dist/index.css";
+import React from "react";
+import { Editor } from "@ketcher/react";
 import { StandaloneStructServiceProvider } from "ketcher-standalone";
-import "ketcher-react/dist/index.css";
 
 const structServiceProvider = new StandaloneStructServiceProvider();
 
@@ -10,22 +11,16 @@ interface KetcherEditorProps {
   onInit?: (ketcher: any) => void;
 }
 
-export default function KetcherEditor({ onInit }: KetcherEditorProps) {
+const KetcherEditor: React.FC<KetcherEditorProps> = ({ onInit }) => {
   return (
-    <div className="h-full w-full">
+    <div className="w-full h-full min-h-[500px] border rounded-lg overflow-hidden bg-white">
       <Editor
-        staticResourcesUrl="/ketcher/" // Points to the new folder we just created
-        structServiceProvider={provider}
-        errorHandler={(err: any) => console.error("Ketcher Error:", err)}
-        onInit={(ketcher) => {
-          if (typeof window !== "undefined") {
-            (window as any).ketcher = ketcher;
-          }
-          if (onInit) {
-            onInit(ketcher);
-          }
-        }}
+        staticResourcesUrl={process.env.NEXT_PUBLIC_STATIC_RESOURCES_URL || ""}
+        structServiceProvider={structServiceProvider} // Fixed from 'provider'
+        onInit={onInit} // Forwarding this allows page.tsx to hook into Ketcher
       />
     </div>
   );
-}
+};
+
+export default KetcherEditor;

@@ -1160,7 +1160,19 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
                 </div>
 
                 <div className="flex-1 w-full bg-white relative overflow-hidden">
-                  <KetcherEditor onInit={handleKetcherInit} />
+                  <KetcherEditor
+                    onInit={(ketcher) => {
+                      setKetcherInstance(ketcher);
+                      
+                      // Immediate population fallback if a selection existed prior to canvas mount
+                      if (selectedCompound) {
+                        const structure = selectedCompound.molfile || selectedCompound.smiles;
+                        if (structure) {
+                          ketcher.setMolecule(structure).catch(console.error);
+                        }
+                      }
+                    }}
+                  />
                 </div>
               </div>
 
