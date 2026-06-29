@@ -1,8 +1,8 @@
-// ketcher-editor.tsx
+// src/components/ketcher-editor.tsx
 "use client";
-import "@ketcher/react/dist/index.css";
+import "ketcher-react/dist/index.css"; // Fixed package name from @ketcher/react
 import React from "react";
-import { Editor } from "@ketcher/react";
+import { Editor } from "ketcher-react"; // Fixed package name from @ketcher/react
 import { StandaloneStructServiceProvider } from "ketcher-standalone";
 
 const structServiceProvider = new StandaloneStructServiceProvider();
@@ -16,8 +16,8 @@ const KetcherEditor: React.FC<KetcherEditorProps> = ({ onInit }) => {
     <div className="w-full h-full min-h-[500px] border rounded-lg overflow-hidden bg-white">
       <Editor
         staticResourcesUrl={process.env.NEXT_PUBLIC_STATIC_RESOURCES_URL || ""}
-        structServiceProvider={structServiceProvider} // Fixed from 'provider'
-        onInit={onInit} // Forwarding this allows page.tsx to hook into Ketcher
+        structServiceProvider={structServiceProvider}
+        onInit={onInit}
       />
     </div>
   );
