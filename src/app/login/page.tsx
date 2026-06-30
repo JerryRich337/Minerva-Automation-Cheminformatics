@@ -1,10 +1,8 @@
 "use client";
 
 import { useState } from "react";
-
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-
 import { signInWithEmailAndPassword } from "firebase/auth";
 
 import { Button } from "@/components/ui/button";
@@ -18,50 +16,49 @@ export default function LoginPage() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(""); // Clear previous errors
+    setError("");
 
     try {
-      // 1. Log the user in
       await signInWithEmailAndPassword(auth, email, password);
-
-      // 2. THE FIX: Wait 800 milliseconds for Firebase state to update
-      // before attempting to navigate to the protected layout.
       setTimeout(() => {
         router.push("/dashboard/default");
       }, 800);
     } catch (err: any) {
-      // If it fails, show a generic error
       setError("Invalid email or password. Please try again.");
     }
   };
 
-  // Inside your LoginPage component
-  // Inside your LoginPage component
   const handleDemoLogin = async () => {
     setError("");
     try {
-      // 1. Authenticate using the hardcoded demo credentials
-      // Make sure these match EXACTLY what you created in Firebase Auth
       await signInWithEmailAndPassword(auth, "demo@gmail.com", "password123");
-
-      // 2. Successful login will trigger onAuthStateChanged in your AuthGuard
-      // Redirect after a short delay to ensure the auth state is fully propagated
       setTimeout(() => {
         router.push("/dashboard/default");
       }, 500);
     } catch (err: any) {
       console.error("Auth Error:", err);
-      // Provide a clearer error based on the actual failure
       setError("Demo login failed. Please ensure the demo user exists in Firebase Auth.");
     }
   };
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-background">
-      <div className="w-full max-w-[400px] space-y-6 rounded-lg border p-6 shadow-md">
-        <div className="space-y-2 text-center">
+    <div className="flex min-h-screen flex-col items-center justify-center bg-background px-4">
+      <div className="relative w-full max-w-[400px] space-y-6 rounded-lg border p-6 shadow-md bg-card">
+        {/* --- BACK BUTTON --- */}
+        <Link 
+          href="/" 
+          className="absolute left-4 top-4 inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="size-3.5">
+            <path d="m15 18-6-6 6-6"/>
+          </svg>
+          Back
+        </Link>
+        {/* ----------------- */}
+
+        <div className="space-y-2 text-center pt-2">
           <h1 className="text-3xl font-bold">Welcome Back</h1>
-          <p className="text-muted-foreground">Enter your credentials to access your account</p>
+          <p className="text-muted-foreground text-sm">Enter your credentials to access your account</p>
         </div>
 
         <form onSubmit={handleLogin} className="space-y-4">
@@ -72,7 +69,7 @@ export default function LoginPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="flex h-10 w-full rounded-md border bg-transparent px-3 py-2 text-sm"
+              className="flex h-10 w-full rounded-md border bg-transparent px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               placeholder="name@example.com"
             />
           </div>
@@ -83,7 +80,7 @@ export default function LoginPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              className="flex h-10 w-full rounded-md border bg-transparent px-3 py-2 text-sm"
+              className="flex h-10 w-full rounded-md border bg-transparent px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             />
           </div>
 
@@ -94,7 +91,6 @@ export default function LoginPage() {
           </Button>
         </form>
 
-        {/* --- DEMO BUTTON SECTION --- */}
         <div className="relative my-4">
           <div className="absolute inset-0 flex items-center">
             <span className="w-full border-t border-border" />
@@ -107,7 +103,6 @@ export default function LoginPage() {
         <Button variant="outline" type="button" className="w-full cursor-pointer" onClick={handleDemoLogin}>
           Try Demo
         </Button>
-        {/* --------------------------- */}
 
         <div className="text-center text-sm">
           Don't have an account?{" "}
