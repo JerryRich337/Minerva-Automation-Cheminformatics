@@ -1477,7 +1477,7 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
                             <div className="mt-3 p-3 rounded-lg bg-muted/50 border border-border/50 text-xs text-muted-foreground space-y-2 animate-in fade-in slide-in-from-top-1 duration-200">
                               <div className="font-semibold text-foreground">Rough Contribution Formula:</div>
                               <div className="overflow-x-auto py-1.5 px-2 font-mono text-center text-foreground bg-background rounded border border-border/30">
-                                MW = (C \times 12.01) + (H \times 1.01) + (N \times 14.01) + (O \times 16.00) + (X \times 19.00)
+                                {"MW = (C \\times 12.01) + (H \\times 1.01) + (N \\times 14.01) + (O \\times 16.00) + (X \\times 19.00)"}
                               </div>
                               <p className="text-[11px] leading-relaxed">
                                 Summation of basic atomic mass values based on character string scanning counts.
@@ -1512,7 +1512,7 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
                             <div className="mt-3 p-3 rounded-lg bg-blue-500/10 border border-blue-200/50 text-xs text-blue-900 dark:text-blue-200 space-y-2 animate-in fade-in slide-in-from-top-1 duration-200">
                               <div className="font-semibold">Solubility Estimation Model:</div>
                               <div className="overflow-x-auto py-1.5 px-2 font-mono text-center bg-background/50 rounded border border-blue-200/30">
-                                {"\\text{LogS} = 0.5 - 0.01(\text{MW}) - 0.5(\text{LogP}) - 0.1(\text{RotBonds})"}
+                                {"\\text{LogS} = 0.5 - 0.01(\\text{MW}) - 0.5(\\text{LogP}) - 0.1(\\text{RotBonds})"}
                               </div>
                               <p className="text-[11px] leading-relaxed">
                                 General Solubility Equation (GSE) estimating aqueous solubility based on molecular
@@ -1577,7 +1577,7 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
                           <div className="mt-3 p-3 rounded-lg bg-red-500/10 border border-red-200/50 text-xs text-red-900 dark:text-red-200 space-y-2 animate-in fade-in slide-in-from-top-1 duration-200">
                             <div className="font-semibold">Structural Alert Evaluation:</div>
                             <div className="overflow-x-auto py-1.5 px-2 font-mono text-center bg-background/50 rounded border border-red-200/30">
-                              {"\\text{Risk Level} = \mathbb{I}(\text{Toxicophores} \cap \text{SMILES} \neq \emptyset)"}
+                              {"\\text{Risk Level} = \\mathbb{I}(\\text{Toxicophores} \\cap \\text{SMILES} \\neq \\emptyset)"}
                             </div>
                             <p className="text-[11px] leading-relaxed">
                               Substructure matching against a predefined library of mutagenic, reactive functional
@@ -1623,7 +1623,7 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
                           <div className="mt-3 p-3 rounded-lg bg-muted/50 border border-border/50 text-xs text-muted-foreground space-y-2 animate-in fade-in slide-in-from-top-1 duration-200">
                             <div className="font-semibold text-foreground">Quantitative Estimate of Drug-likeness:</div>
                             <div className="overflow-x-auto py-1.5 px-2 font-mono text-center text-foreground bg-background rounded border border-border/30">
-                              {"\\text{QED} = \exp\left( \frac{1}{n} \sum_{i=1}^n \ln(d_i) \right)"}
+                              {"\\text{QED} = \\exp\\left( \\frac{1}{n} \\sum_{i=1}^n \\ln(d_i) \\right)"}
                             </div>
                             <p className="text-[11px] leading-relaxed">
                               Geometric mean of individual desirability functions (d_i) for molecular properties
@@ -1689,7 +1689,7 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
                           <div className="mt-3 p-3 rounded-lg bg-muted/50 border border-border/50 text-xs text-muted-foreground space-y-2 animate-in fade-in slide-in-from-top-1 duration-200">
                             <div className="font-semibold text-foreground">Lipinski's Rule of 5 Assessment:</div>
                             <div className="overflow-x-auto py-1.5 px-2 font-mono text-center text-foreground bg-background rounded border border-border/30">
-                              {"\\text{Violations} = \mathbb{I}(\text{MW} > 500) + \mathbb{I}(\text{LogP} > 5) + \mathbb{I}(\text{HBD} > 5) + \mathbb{I}(\text{HBA} > 10)"}
+                              {"\\text{Violations} = \\mathbb{I}(\\text{MW} > 500) + \\mathbb{I}(\\text{LogP} > 5) + \\mathbb{I}(\\text{HBD} > 5) + \\mathbb{I}(\\text{HBA} > 10)"}
                             </div>
                             <p className="text-[11px] leading-relaxed">
                               Evaluates drug-likeness based on four primary pharmacokinetic rules. A count of 2 or more
@@ -1725,7 +1725,7 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
                           <div className="mt-3 p-3 rounded-lg bg-muted/50 border border-border/50 text-xs text-muted-foreground space-y-2 animate-in fade-in slide-in-from-top-1 duration-200">
                             <div className="font-semibold text-foreground">Rough Contribution Formula:</div>
                             <div className="overflow-x-auto py-1.5 px-2 font-mono text-center text-foreground bg-background rounded border border-border/30">
-                              {"\\text{MW} = (\text{C} \times 12.01) + (\text{H} \times 1.01) + (\text{N} \times 14.01) + (\text{O} \times 16.00) + (\text{X} \times 19.00)"}
+                              {"\\text{MW} = (\\text{C} \\times 12.01) + (\\text{H} \\times 1.01) + (\\text{N} \\times 14.01) + (\\text{O} \\times 16.00) + (\\text{X} \\times 19.00)"}
                             </div>
                             <p className="text-[11px] leading-relaxed">
                               Summation of basic atomic mass values based on character string scanning counts. Halogens
@@ -1759,7 +1759,7 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
                           <div className="mt-3 p-3 rounded-lg bg-muted/50 border border-border/50 text-xs text-muted-foreground space-y-2 animate-in fade-in slide-in-from-top-1 duration-200">
                             <div className="font-semibold text-foreground">Linear Estimation Method:</div>
                             <div className="overflow-x-auto py-1.5 px-2 font-mono text-center text-foreground bg-background rounded border border-border/30">
-                              {"\\text{LogP} = (\text{C} \times 0.38) - (\text{O} \times 0.42) - (\text{N} \times 0.28)"}
+                              {"\\text{LogP} = (\\text{C} \\times 0.38) - (\\text{O} \\times 0.42) - (\\text{N} \\times 0.28)"}
                             </div>
                             <p className="text-[11px] leading-relaxed">
                               Approximated using a simplified empirical fragmentation model. Carbon contributions
@@ -1795,7 +1795,7 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
                           <div className="mt-3 p-3 rounded-lg bg-muted/50 border border-border/50 text-xs text-muted-foreground space-y-2 animate-in fade-in slide-in-from-top-1 duration-200">
                             <div className="font-semibold text-foreground">Topological Surface Area Rule:</div>
                             <div className="overflow-x-auto py-1.5 px-2 font-mono text-center text-foreground bg-background rounded border border-border/30">
-                              {"\\text{TPSA} = (\text{O} \times 9.23) + (\text{N} \times 15.79)"}
+                              {"\\text{TPSA} = (\\text{O} \\times 9.23) + (\\text{N} \\times 15.79)"}
                             </div>
                             <p className="text-[11px] leading-relaxed">
                               Calculated based on the standard fallback surface properties mapped across localized
