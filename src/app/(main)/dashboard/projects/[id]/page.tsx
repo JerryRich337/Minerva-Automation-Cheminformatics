@@ -1657,7 +1657,7 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
                           <div className="mt-3 p-3 rounded-lg bg-emerald-500/10 border border-emerald-200/50 text-xs text-emerald-900 dark:text-emerald-200 space-y-2 animate-in fade-in slide-in-from-top-1 duration-200">
                             <div className="font-semibold">Multi-Parameter Optimization (MPO):</div>
                             <div className="overflow-x-auto py-1.5 px-2 font-mono text-center bg-background/50 rounded border border-emerald-200/30">
-                              {"\\text{Status} = (\text{QED} \ge 5.0) \land (\text{Violations} \le 1) \land (\text{Risk} \neq \text{"High"})"}
+                              {"\\text{Status} = (\\text{QED} \\ge 5.0) \\land (\\text{Violations} \\le 1) \\land (\\text{Risk} \\neq \\text{'High'})"}
                             </div>
                             <p className="text-[11px] leading-relaxed">
                               Boolean logic gate evaluating composite scores across structural desirability,
