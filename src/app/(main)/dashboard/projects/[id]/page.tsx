@@ -1337,8 +1337,9 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
               )}
             </div>
           ) : (
-            {/* RESULTS VIEW ROUTER */}
+            
             <div className="rounded-xl border bg-card p-6 shadow-sm space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+              {/* RESULTS VIEW ROUTER */}
               <div className="flex items-center justify-between border-b pb-4">
                 <div className="flex items-center gap-2">
                   <Activity
