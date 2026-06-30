@@ -1,105 +1,62 @@
 "use client";
 
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Controller, useForm } from "react-hook-form";
+import { useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { signInWithEmailAndPassword } from "firebase/auth";
 import { toast } from "sonner";
-import { z } from "zod";
 
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Field, FieldContent, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
-import { Input } from "@/components/ui/input";
+import { auth } from "@/lib/firebase";
 
-const formSchema = z.object({
-  email: z.string().email({ message: "Please enter a valid email address." }),
-  password: z.string().min(6, { message: "Password must be at least 6 characters." }),
-  remember: z.boolean().optional(),
-});
+export default function WelcomePage() {
+  const router = useRouter();
+  const [isLoggingInDemo, setIsLoggingInDemo] = useState(false);
 
-export function LoginForm() {
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      email: "",
-      password: "",
-      remember: false,
-    },
-  });
-
-  const onSubmit = (data: z.infer<typeof formSchema>) => {
-    toast("You submitted the following values", {
-      description: (
-        <pre className="mt-2 w-[320px] rounded-md bg-neutral-950 p-4">
-          <code className="text-white">{JSON.stringify(data, null, 2)}</code>
-        </pre>
-      ),
-    });
+  const handleDemoLogin = async () => {
+    setIsLoggingInDemo(true);
+    try {
+      // Replace with your actual Firebase demo credentials
+      await signInWithEmailAndPassword(auth, "demo@minerva.com", "password123");
+      toast.success("Logged in with demo account!");
+      router.push("/dashboard"); 
+    } catch (error) {
+      console.error("Demo login error:", error);
+      toast.error("Failed to log in with demo credentials.");
+    } finally {
+      setIsLoggingInDemo(false);
+    }
   };
 
   return (
-    <form noValidate onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-4">
-      <FieldGroup className="gap-4">
-        <Controller
-          control={form.control}
-          name="email"
-          render={({ field, fieldState }) => (
-            <Field className="gap-1.5" data-invalid={fieldState.invalid}>
-              <FieldLabel htmlFor="login-email">Email Address</FieldLabel>
-              <Input
-                {...field}
-                id="login-email"
-                type="email"
-                placeholder="you@example.com"
-                autoComplete="email"
-                aria-invalid={fieldState.invalid}
-              />
-              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-            </Field>
-          )}
-        />
-        <Controller
-          control={form.control}
-          name="password"
-          render={({ field, fieldState }) => (
-            <Field className="gap-1.5" data-invalid={fieldState.invalid}>
-              <FieldLabel htmlFor="login-password">Password</FieldLabel>
-              <Input
-                {...field}
-                id="login-password"
-                type="password"
-                placeholder="••••••••"
-                autoComplete="current-password"
-                aria-invalid={fieldState.invalid}
-              />
-              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-            </Field>
-          )}
-        />
-        <Controller
-          control={form.control}
-          name="remember"
-          render={({ field, fieldState }) => (
-            <Field orientation="horizontal" data-invalid={fieldState.invalid}>
-              <Checkbox
-                id="login-remember"
-                name={field.name}
-                checked={field.value}
-                onCheckedChange={(checked) => field.onChange(Boolean(checked))}
-                aria-invalid={fieldState.invalid}
-              />
-              <FieldContent>
-                <FieldLabel htmlFor="login-remember" className="font-normal">
-                  Remember me for 30 days
-                </FieldLabel>
-                {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-              </FieldContent>
-            </Field>
-          )}
-        />
-      </FieldGroup>
-      <Button className="w-full" type="submit">
-        Login
-      </Button>
-    </form>
+    <div className="flex min-h-screen flex-col items-center justify-center bg-background">
+      <div className="mx-auto flex w-full max-w-[400px] flex-col justify-center space-y-6 sm:w-[350px]">
+        <div className="flex flex-col space-y-2 text-center">
+          <h1 className="text-3xl font-semibold tracking-tight">Welcome to Minerva Automation</h1>
+          <p className="text-sm text-muted-foreground">Please log in or create an account to access your dashboard.</p>
+        </div>
+
+        <div className="flex flex-col gap-4">
+          <Link href="/login" className="w-full">
+            <Button className="w-full" disabled={isLoggingInDemo}>Log In</Button>
+          </Link>
+          <Link href="/register" className="w-full">
+            <Button variant="outline" className="w-full" disabled={isLoggingInDemo}>
+              Create Account
+            </Button>
+          </Link>
+          
+          {/* New Try Demo Button */}
+          <Button 
+            variant="outline" 
+            className="w-full cursor-pointer" 
+            onClick={handleDemoLogin}
+            disabled={isLoggingInDemo}
+          >
+            {isLoggingInDemo ? "Connecting..." : "Try Demo"}
+          </Button>
+        </div>
+      </div>
+    </div>
   );
 }
