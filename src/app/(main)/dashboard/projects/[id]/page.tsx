@@ -1816,8 +1816,9 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
           </div>
         )
       ) : (
-        {/* COMPOUND LIBRARY */}
+        
         <div className="flex flex-col flex-1 overflow-hidden rounded-xl border bg-card shadow-sm h-[600px]">
+          {/* COMPOUND LIBRARY */}
           <div className="border-b bg-muted/30 px-4 py-3">
             <h3 className="font-semibold text-sm">Compound Library Results ({filteredCompounds.length})</h3>
           </div>
