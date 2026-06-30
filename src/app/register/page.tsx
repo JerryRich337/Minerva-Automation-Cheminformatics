@@ -33,9 +33,21 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-background">
-      <div className="w-full max-w-[400px] space-y-6 rounded-lg border p-6 shadow-md">
-        <div className="space-y-2 text-center">
+    <div className="flex min-h-screen flex-col items-center justify-center bg-background px-4">
+      <div className="relative w-full max-w-[400px] space-y-6 rounded-lg border p-6 shadow-md bg-card">
+        {/* --- BACK BUTTON --- */}
+        <Link 
+          href="/" 
+          className="absolute left-4 top-4 inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="size-3.5">
+            <path d="m15 18-6-6 6-6"/>
+          </svg>
+          Back
+        </Link>
+        {/* ----------------- */}
+
+        <div className="space-y-2 text-center pt-2">
           <h1 className="text-3xl font-bold">Create an Account</h1>
           <p className="text-muted-foreground">Enter your details below to get started</p>
         </div>
@@ -48,7 +60,7 @@ export default function RegisterPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="flex h-10 w-full rounded-md border bg-transparent px-3 py-2 text-sm"
+              className="flex h-10 w-full rounded-md border bg-transparent px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               placeholder="name@example.com"
             />
           </div>
@@ -59,7 +71,7 @@ export default function RegisterPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              className="flex h-10 w-full rounded-md border bg-transparent px-3 py-2 text-sm"
+              className="flex h-10 w-full rounded-md border bg-transparent px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               placeholder="Minimum 6 characters"
             />
           </div>
