@@ -132,7 +132,7 @@ const CORE_COMPOUND_LIBRARY: Compound[] = [
     type: "EGFR inhibitor",
     target: "EGFR",
     mw: "446.9 g/mol",
-    smiles: "COC1=C(OCCCN2CCOCC2)C=C2N=CN=C(NC3=CC(Cl)=C(F)C=C3)C2=C1",
+    smiles: "COCOC1=C(OCCCN2CCOCC2)C=C2N=CN=C(NC3=CC(Cl)=C(F)C=C3)C2=C1",
   },
   {
     id: 7,
@@ -446,7 +446,7 @@ const CORE_COMPOUND_LIBRARY: Compound[] = [
     type: "Natural product polyphenol",
     target: "NF-kB, antioxidant pathways",
     mw: "368.4 g/mol",
-    smiles: "COC1=C(C=CC(=C1)C=CC(=O)CC(=O)C=CC2=CC(=C(C=C2)O)OC)O",
+    smiles: "COCO1=C(C=CC(=C1)C=CC(=O)CC(=O)C=CC2=CC(=C(C=C2)O)OC)O",
   },
 ];
 
@@ -551,23 +551,23 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
       fileContent += `Formula: ${v.formula}\n`;
 
       fileContent += `Molecular Weight: ${v.mw}\n`;
-      fileContent += `  > Math: MW = (C × 12.01) + (H × 1.01) + (N × 14.01) + (O × 16.00) + (X × 19.00)\n\n`;
+      fileContent += `  > Math: MW = (C * 12.01) + (H * 1.01) + (N * 14.01) + (O * 16.00) + (X * 19.00)\n\n`;
 
       fileContent += `LogP (Lipophilicity): ${v.logp}\n`;
-      fileContent += `  > Math: LogP = (C × 0.38) - (O × 0.42) - (N × 0.28)\n\n`;
+      fileContent += `  > Math: LogP = (C * 0.38) - (O * 0.42) - (N * 0.28)\n\n`;
 
       fileContent += `TPSA (Polar Surface Area): ${v.tpsa}\n`;
-      fileContent += `  > Math: TPSA = (O × 9.23) + (N × 15.79)\n\n`;
+      fileContent += `  > Math: TPSA = (O * 9.23) + (N * 15.79)\n\n`;
 
       fileContent += `Solubility (In H2O): ${v.solubility}\n`;
       fileContent += `  > Math: LogS = 0.5 - 0.01(MW) - 0.5(LogP) - 0.1(RotBonds)\n\n`;
 
       fileContent += `Toxicity Score: ${v.toxScore} (${v.riskLevel})\n`;
-      fileContent += `  > Math (Score): ToxScore = Base(0.15) + (Halogens × 0.15) + LogP Penalty\n`;
-      fileContent += `  > Math (Risk): Count(Toxicophores ∩ SMILES) == 0\n\n`;
+      fileContent += `  > Math (Score): ToxScore = Base(0.15) + (Halogens * 0.15) + LogP Penalty\n`;
+      fileContent += `  > Math (Risk): Count(Toxicophores intersect SMILES) == 0\n\n`;
 
       fileContent += `Drug-Likeness: ${v.drugLikenessScore} (${v.dlStatus})\n`;
-      fileContent += `  > Math (QED): exp( (1/n) × Σ ln(d_i) )\n`;
+      fileContent += `  > Math (QED): exp( (1/n) * sum( ln(d_i) ) )\n`;
       fileContent += `  > Math (Status): (QED >= 5.0) & (Violations <= 1) & (Risk != "High")\n\n`;
 
       fileContent += `Lipinski Violations: ${v.lipinskiViolations}\n`;
@@ -874,7 +874,6 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
         return;
       }
 
-      // Fix: Count only the saved structures that belong to the current base compound
       const currentBaseName = getBaseCompoundName();
       const sameCompoundCount = savedStructures.filter((structure) =>
         structure.name.toLowerCase().startsWith(currentBaseName.toLowerCase()),
@@ -907,7 +906,6 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
   const handleProcessRankingEngine = () => {
     setCalculating(true);
     setViewMode("prediction");
-    // Simulate complex batch processing time
     setTimeout(() => {
       setCalculating(false);
     }, 1500);
@@ -1046,13 +1044,7 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
         setVariantList((prev) => {
           const isDuplicate = prev.some((p) => p.smiles === currentSmiles);
           if (!isDuplicate) {
-            // Fix: Count only queued variants that share the same base compound name
             const currentBaseName = getBaseCompoundName();
-            const sameCompoundCount = prev.filter((p) =>
-              p.name.toLowerCase().startsWith(currentBaseName.toLowerCase()),
-            ).length;
-
-            const getVName = `${currentBaseName} Variant #${sameCompoundCount + 1}`;
             return selectedCompound ? [...prev, { ...evaluatedPredictionObj, name: selectedCompound.name }] : prev;
           }
           return prev;
@@ -1163,8 +1155,6 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
                   <KetcherEditor
                     onInit={(ketcher) => {
                       setKetcherInstance(ketcher);
-                      
-                      // Immediate population fallback if a selection existed prior to canvas mount
                       if (selectedCompound) {
                         const structure = selectedCompound.molfile || selectedCompound.smiles;
                         if (structure) {
@@ -1347,7 +1337,7 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
               )}
             </div>
           ) : (
-            // RESULTS VIEW ROUTER
+            {/* RESULTS VIEW ROUTER */}
             <div className="rounded-xl border bg-card p-6 shadow-sm space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
               <div className="flex items-center justify-between border-b pb-4">
                 <div className="flex items-center gap-2">
@@ -1363,7 +1353,6 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
                   </h2>
                 </div>
 
-                {/* Button Stack */}
                 <div className="flex flex-col gap-2 items-end">
                   <Button variant="outline" size="sm" onClick={() => setViewMode("canvas")} className="cursor-pointer">
                     <ChevronLeft className="size-4 mr-1" /> Back to Editor
@@ -1388,7 +1377,6 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
                 </div>
               ) : (
                 <div className="space-y-6">
-                  {/* Hide single model block if in Variant Ranking Engine */}
                   {predictionAction !== "Variant Ranking Engine" && (
                     <div>
                       <span className="text-xs uppercase font-semibold tracking-wider text-muted-foreground">
@@ -1399,7 +1387,6 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
                     </div>
                   )}
 
-                  {/* ROUTER FOR RESULT INTERFACES */}
                   {predictionAction === "Variant Ranking Engine" ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                       {variantList.map((variant, idx) => {
@@ -1489,7 +1476,7 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
                             <div className="mt-3 p-3 rounded-lg bg-muted/50 border border-border/50 text-xs text-muted-foreground space-y-2 animate-in fade-in slide-in-from-top-1 duration-200">
                               <div className="font-semibold text-foreground">Rough Contribution Formula:</div>
                               <div className="overflow-x-auto py-1.5 px-2 font-mono text-center text-foreground bg-background rounded border border-border/30">
-                                MW = (C × 12.01) + (H × 1.01) + (N × 14.01) + (O × 16.00) + (X × 19.00)
+                                MW = (C \times 12.01) + (H \times 1.01) + (N \times 14.01) + (O \times 16.00) + (X \times 19.00)
                               </div>
                               <p className="text-[11px] leading-relaxed">
                                 Summation of basic atomic mass values based on character string scanning counts.
@@ -1524,7 +1511,7 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
                             <div className="mt-3 p-3 rounded-lg bg-blue-500/10 border border-blue-200/50 text-xs text-blue-900 dark:text-blue-200 space-y-2 animate-in fade-in slide-in-from-top-1 duration-200">
                               <div className="font-semibold">Solubility Estimation Model:</div>
                               <div className="overflow-x-auto py-1.5 px-2 font-mono text-center bg-background/50 rounded border border-blue-200/30">
-                                LogS = 0.5 - 0.01(MW) - 0.5(LogP) - 0.1(RotBonds)
+                                \text{LogS} = 0.5 - 0.01(\text{MW}) - 0.5(\text{LogP}) - 0.1(\text{RotBonds})
                               </div>
                               <p className="text-[11px] leading-relaxed">
                                 General Solubility Equation (GSE) estimating aqueous solubility based on molecular
@@ -1557,7 +1544,7 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
                           <div className="mt-3 p-3 rounded-lg bg-muted/50 border border-border/50 text-xs text-muted-foreground space-y-2 animate-in fade-in slide-in-from-top-1 duration-200">
                             <div className="font-semibold text-foreground">Heuristic Toxicity Calculation:</div>
                             <div className="overflow-x-auto py-1.5 px-2 font-mono text-center text-foreground bg-background rounded border border-border/30">
-                              ToxScore = Base(0.15) + (Halogens × 0.15) + LogP Penalty
+                              \text{ToxScore} = \text{Base}(0.15) + (\text{Halogens} \times 0.15) + \text{LogP Penalty}
                             </div>
                             <p className="text-[11px] leading-relaxed">
                               Calculated risk coefficient factoring in highly reactive substituents and excess
@@ -1589,7 +1576,7 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
                           <div className="mt-3 p-3 rounded-lg bg-red-500/10 border border-red-200/50 text-xs text-red-900 dark:text-red-200 space-y-2 animate-in fade-in slide-in-from-top-1 duration-200">
                             <div className="font-semibold">Structural Alert Evaluation:</div>
                             <div className="overflow-x-auto py-1.5 px-2 font-mono text-center bg-background/50 rounded border border-red-200/30">
-                              Risk Level = Count(Toxicophores ∩ SMILES) == 0
+                              \text{Risk Level} = \mathbb{I}(\text{Toxicophores} \cap \text{SMILES} \neq \emptyset)
                             </div>
                             <p className="text-[11px] leading-relaxed">
                               Substructure matching against a predefined library of mutagenic, reactive functional
@@ -1635,7 +1622,7 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
                           <div className="mt-3 p-3 rounded-lg bg-muted/50 border border-border/50 text-xs text-muted-foreground space-y-2 animate-in fade-in slide-in-from-top-1 duration-200">
                             <div className="font-semibold text-foreground">Quantitative Estimate of Drug-likeness:</div>
                             <div className="overflow-x-auto py-1.5 px-2 font-mono text-center text-foreground bg-background rounded border border-border/30">
-                              QED = exp( (1/n) × Σ ln(d_i) )
+                              \text{QED} = \exp\left( \frac{1}{n} \sum_{i=1}^n \ln(d_i) \right)
                             </div>
                             <p className="text-[11px] leading-relaxed">
                               Geometric mean of individual desirability functions (d_i) for molecular properties
@@ -1669,7 +1656,7 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
                           <div className="mt-3 p-3 rounded-lg bg-emerald-500/10 border border-emerald-200/50 text-xs text-emerald-900 dark:text-emerald-200 space-y-2 animate-in fade-in slide-in-from-top-1 duration-200">
                             <div className="font-semibold">Multi-Parameter Optimization (MPO):</div>
                             <div className="overflow-x-auto py-1.5 px-2 font-mono text-center bg-background/50 rounded border border-emerald-200/30">
-                              Status = (QED ≥ 5.0) & (Violations ≤ 1) & (Risk != "High")
+                              \text{Status} = (\text{QED} \ge 5.0) \land (\text{Violations} \le 1) \land (\text{Risk} \neq \text{"High"})
                             </div>
                             <p className="text-[11px] leading-relaxed">
                               Boolean logic gate evaluating composite scores across structural desirability,
@@ -1701,7 +1688,7 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
                           <div className="mt-3 p-3 rounded-lg bg-muted/50 border border-border/50 text-xs text-muted-foreground space-y-2 animate-in fade-in slide-in-from-top-1 duration-200">
                             <div className="font-semibold text-foreground">Lipinski's Rule of 5 Assessment:</div>
                             <div className="overflow-x-auto py-1.5 px-2 font-mono text-center text-foreground bg-background rounded border border-border/30">
-                              Violations = (MW&gt;500) + (LogP&gt;5) + (HBD&gt;5) + (HBA&gt;10)
+                              \text{Violations} = \mathbb{I}(\text{MW} > 500) + \mathbb{I}(\text{LogP} > 5) + \mathbb{I}(\text{HBD} > 5) + \mathbb{I}(\text{HBA} > 10)
                             </div>
                             <p className="text-[11px] leading-relaxed">
                               Evaluates drug-likeness based on four primary pharmacokinetic rules. A count of 2 or more
@@ -1712,7 +1699,6 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
                       </div>
                     </div>
                   ) : (
-                    /* GENERAL BASE PROFILE WORKFLOW GRID WITH EQUATION TOGGLES */
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
                       {/* MOLECULAR WEIGHT CARD */}
                       <div className="rounded-xl border bg-card p-4 text-card-foreground shadow-xs flex flex-col justify-between">
@@ -1738,7 +1724,7 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
                           <div className="mt-3 p-3 rounded-lg bg-muted/50 border border-border/50 text-xs text-muted-foreground space-y-2 animate-in fade-in slide-in-from-top-1 duration-200">
                             <div className="font-semibold text-foreground">Rough Contribution Formula:</div>
                             <div className="overflow-x-auto py-1.5 px-2 font-mono text-center text-foreground bg-background rounded border border-border/30">
-                              MW = (C × 12.01) + (H × 1.01) + (N × 14.01) + (O × 16.00) + (X × 19.00)
+                              \text{MW} = (\text{C} \times 12.01) + (\text{H} \times 1.01) + (\text{N} \times 14.01) + (\text{O} \times 16.00) + (\text{X} \times 19.00)
                             </div>
                             <p className="text-[11px] leading-relaxed">
                               Summation of basic atomic mass values based on character string scanning counts. Halogens
@@ -1772,7 +1758,7 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
                           <div className="mt-3 p-3 rounded-lg bg-muted/50 border border-border/50 text-xs text-muted-foreground space-y-2 animate-in fade-in slide-in-from-top-1 duration-200">
                             <div className="font-semibold text-foreground">Linear Estimation Method:</div>
                             <div className="overflow-x-auto py-1.5 px-2 font-mono text-center text-foreground bg-background rounded border border-border/30">
-                              LogP = (C × 0.38) - (O × 0.42) - (N × 0.28)
+                              \text{LogP} = (\text{C} \times 0.38) - (\text{O} \times 0.42) - (\text{N} \times 0.28)
                             </div>
                             <p className="text-[11px] leading-relaxed">
                               Approximated using a simplified empirical fragmentation model. Carbon contributions
@@ -1808,7 +1794,7 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
                           <div className="mt-3 p-3 rounded-lg bg-muted/50 border border-border/50 text-xs text-muted-foreground space-y-2 animate-in fade-in slide-in-from-top-1 duration-200">
                             <div className="font-semibold text-foreground">Topological Surface Area Rule:</div>
                             <div className="overflow-x-auto py-1.5 px-2 font-mono text-center text-foreground bg-background rounded border border-border/30">
-                              TPSA = (O × 9.23) + (N × 15.79)
+                              \text{TPSA} = (\text{O} \times 9.23) + (\text{N} \times 15.79)
                             </div>
                             <p className="text-[11px] leading-relaxed">
                               Calculated based on the standard fallback surface properties mapped across localized
@@ -1829,7 +1815,7 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
           </div>
         )
       ) : (
-        // COMPOUND LIBRARY
+        {/* COMPOUND LIBRARY */}
         <div className="flex flex-col flex-1 overflow-hidden rounded-xl border bg-card shadow-sm h-[600px]">
           <div className="border-b bg-muted/30 px-4 py-3">
             <h3 className="font-semibold text-sm">Compound Library Results ({filteredCompounds.length})</h3>
