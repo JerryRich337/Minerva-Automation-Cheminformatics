@@ -1545,7 +1545,7 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
                           <div className="mt-3 p-3 rounded-lg bg-muted/50 border border-border/50 text-xs text-muted-foreground space-y-2 animate-in fade-in slide-in-from-top-1 duration-200">
                             <div className="font-semibold text-foreground">Heuristic Toxicity Calculation:</div>
                             <div className="overflow-x-auto py-1.5 px-2 font-mono text-center text-foreground bg-background rounded border border-border/30">
-                              \text{ToxScore} = \text{Base}(0.15) + (\text{Halogens} \times 0.15) + \text{LogP Penalty}
+                              {"\\text{ToxScore} = \\text{Base}(0.15) + (\\text{Halogens} \\times 0.15) + \\text{LogP Penalty}"}
                             </div>
                             <p className="text-[11px] leading-relaxed">
                               Calculated risk coefficient factoring in highly reactive substituents and excess
