@@ -109,7 +109,7 @@ export function DataSection() {
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.target && e.target.files && e.target.files.length > 0) {
+    if (e.target.files && e.target.files.length > 0) {
       validateFile(e.target.files[0]);
     }
   };
