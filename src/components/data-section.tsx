@@ -253,18 +253,28 @@ export function DataSection() {
     if (!selectedFile || !userId) return;
 
     try {
-      await addDoc(collection(db, "reports"), {
+      // 1. Create a reference to the collection
+      const reportsCollection = collection(db, "reports");
+
+      // 2. Add the document to Firestore
+      await addDoc(reportsCollection, {
         name: selectedFile.name,
-        description: `Instrument: ${detectedInstrument || "Unknown"} | Size: ${(selectedFile.size / 1024).toFixed(2)} KB`,
+        description: `Instrument: ${detectedInstrument || "Unknown Instrument"} | Size: ${(selectedFile.size / 1024).toFixed(2)} KB`,
         userId: userId,
-        createdAt: serverTimestamp(), // Server-side atomic clock syncing
+        createdAt: serverTimestamp(), // Ensures correct ordering on reload
       });
 
+      // 3. Clear the file uploader inputs and close the dialog
       clearSelection();
       setOpen(false);
-    } catch (error) {
-      console.error("Error adding report asset: ", error);
-      setErrorMessage("Failed to write report. Confirm your Firestore rules permit creation.");
+      
+    } catch (error: any) {
+      console.error("FIRESTORE WRITE ERROR:", error);
+      setErrorMessage(
+        error.message?.includes("permission-denied")
+          ? "Permission denied. Check your Firestore Security Rules."
+          : "Failed to save report. Open your browser console to check for missing index URLs."
+      );
     }
   };
 
