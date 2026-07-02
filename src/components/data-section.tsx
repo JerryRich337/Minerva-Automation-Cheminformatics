@@ -32,14 +32,12 @@ interface Report {
   description: string;
 }
 
-// Strictly allowed extensions
 const ALLOWED_EXTENSIONS = [
   "csv", "tsv", "txt", "xlsx", "json", "xml", "zip", 
   "mzml", "mzxml", "fcs", "rdml", "ome-tiff", "tiff", 
   "jcamp-dx", "fastq", "fasta", "bam", "vcf", "hdf5", "parquet"
 ];
 
-// Target focus instruments for manual drop menu toggle overriding
 const INSTRUMENT_PRESETS = [
   "High-Performance Liquid Chromatography (HPLC System)",
   "Liquid Chromatography-Mass Spectrometry (LC-MS/MS)",
@@ -60,12 +58,10 @@ export function DataSection() {
   const [reports, setReports] = useState<Report[]>([]);
   const [userId, setUserId] = useState<string | null>(null);
   
-  // Drag and Drop / File Selection State
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   
-  // Instrument Detection Engine State
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [detectedInstrument, setDetectedInstrument] = useState<string | null>(null);
   const [isManualOverride, setIsManualOverride] = useState(false);
@@ -95,7 +91,6 @@ export function DataSection() {
     return () => unsubscribeAuth();
   }, []);
 
-  // ENHANCED INSTRUMENT DETECTION ENGINE
   const analyzeInstrument = (file: File) => {
     setIsAnalyzing(true);
     setDetectedInstrument("Analyzing layout signatures...");
@@ -114,21 +109,18 @@ export function DataSection() {
         return;
       }
 
-      // 1. Binary Signature Check
       const uint8 = new Uint8Array(arrayBuffer.slice(0, 4));
       let magicBytes = "";
       for (let i = 0; i < uint8.length; i++) {
         magicBytes += uint8[i].toString(16).padStart(2, "0");
       }
 
-      // Convert to text string to inspect textual headers (Metadata/Structure Detector)
       const textDecoder = new TextDecoder("utf-8");
       const headerText = textDecoder.decode(new Uint8Array(arrayBuffer));
       const headerTextLower = headerText.toLowerCase();
 
       let instrumentName = "Generic Tabular Matrix Table";
 
-      // 2. High-Performance Chromatography Deep Capabilities Match
       const hplcKeywords = [
         "hplc", "chromatogram", "retention time", "ret.time", "r.time", "m/z", 
         "absorbance", "wavelength", "peak table", "peak list", "area%", "height",
@@ -180,7 +172,6 @@ export function DataSection() {
       setIsAnalyzing(false);
     };
 
-    // Slice 4KB block to verify structure layout text safely
     const blobSlice = file.slice(0, 4096);
     reader.readAsArrayBuffer(blobSlice);
   };
@@ -258,7 +249,7 @@ export function DataSection() {
   };
 
   return (
-    <div className="flex flex-col gap-4 rounded-xl border bg-card p-6 text-card-foreground shadow-xs">
+    <div className="flex flex-col gap-4 rounded-xl border bg-card p-6 text-card-foreground shadow-sm">
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-semibold tracking-tight">Data</h2>
 
@@ -270,13 +261,15 @@ export function DataSection() {
             </Button>
           </DialogTrigger>
 
-          <DialogContent className="sm:max-w-[500px]">
-            <DialogHeader>
-              <DialogTitle>Create New Report</DialogTitle>
-              <DialogDescription>Upload your analytical file dataset to initialize a new workbench report layout.</DialogDescription>
+          <DialogContent className="sm:max-w-[500px] p-6 gap-6">
+            <DialogHeader className="gap-1">
+              <DialogTitle className="text-lg font-semibold">Create New Report</DialogTitle>
+              <DialogDescription className="text-sm text-muted-foreground">
+                Upload your analytical file dataset to initialize a new workbench report layout.
+              </DialogDescription>
             </DialogHeader>
 
-            <div className="py-4">
+            <div className="flex flex-col gap-4">
               <input
                 type="file"
                 ref={fileInputRef}
@@ -290,32 +283,32 @@ export function DataSection() {
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
                 onClick={() => fileInputRef.current?.click()}
-                className={`flex flex-col items-center justify-center border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-colors ${
+                className={`flex flex-col items-center justify-center border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all duration-200 ${
                   isDragging 
-                    ? "border-primary bg-primary/5" 
+                    ? "border-primary bg-primary/5 scale-[0.99]" 
                     : selectedFile 
-                      ? "border-emerald-500 bg-emerald-50/10 dark:bg-emerald-950/10" 
-                      : "border-border hover:bg-muted/50"
+                      ? "border-emerald-500/40 bg-emerald-50/10 dark:bg-emerald-950/5" 
+                      : "border-muted-foreground/20 hover:border-muted-foreground/40 hover:bg-muted/30"
                 }`}
               >
                 {!selectedFile ? (
                   <>
-                    <div className="flex size-10 items-center justify-center rounded-lg border bg-background shadow-xs mb-3 text-muted-foreground">
+                    <div className="flex size-10 items-center justify-center rounded-lg border bg-background shadow-sm mb-3 text-muted-foreground">
                       <UploadCloud className="size-5" />
                     </div>
-                    <p className="text-sm font-medium">Click to upload or drag & drop</p>
+                    <p className="text-sm font-medium text-foreground">Click to upload or drag & drop</p>
                     <p className="text-xs text-muted-foreground mt-1 max-w-[340px]">
-                      Accepts standard tabular, mass spectrometry, sequencing formats, packages, layouts or archives.
+                      Accepts standard tabular, mass spectrometry, sequencing formats, or packages.
                     </p>
                   </>
                 ) : (
-                  <div className="flex w-full items-center justify-between gap-3 bg-muted/40 p-3 rounded-lg border border-emerald-500/30">
-                    <div className="flex items-center gap-2.5 overflow-hidden">
+                  <div className="flex w-full items-center justify-between gap-3 bg-background p-3 rounded-lg border shadow-sm">
+                    <div className="flex items-center gap-3 overflow-hidden">
                       <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
                         <File className="size-4" />
                       </div>
                       <div className="text-left overflow-hidden">
-                        <p className="text-sm font-medium truncate pr-2">{selectedFile.name}</p>
+                        <p className="text-sm font-medium text-foreground truncate max-w-[240px]">{selectedFile.name}</p>
                         <p className="text-xs text-muted-foreground">{(selectedFile.size / 1024).toFixed(1)} KB</p>
                       </div>
                     </div>
@@ -324,7 +317,7 @@ export function DataSection() {
                       variant="ghost" 
                       size="icon" 
                       onClick={(e) => { e.stopPropagation(); clearSelection(); }}
-                      className="size-7 h-7 w-7 text-muted-foreground hover:text-foreground shrink-0 rounded-md"
+                      className="size-7 text-muted-foreground hover:text-foreground hover:bg-muted shrink-0 rounded-md"
                     >
                       <X className="size-4" />
                     </Button>
@@ -332,55 +325,56 @@ export function DataSection() {
                 )}
               </div>
 
-              {/* Enhanced Detection Engine and Interactive Selection Menu Override */}
               {selectedFile && detectedInstrument && (
-                <div className="mt-3 flex flex-col gap-2 rounded-lg border border-border bg-muted/50 p-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2.5 overflow-hidden">
-                      <Cpu className={`size-4 text-primary shrink-0 ${isAnalyzing ? "animate-pulse" : ""}`} />
-                      <div className="text-left overflow-hidden">
-                        <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
-                          {isManualOverride ? "Manual Selected Override" : "Engine Identification Match"}
-                        </p>
-                        <p className="truncate font-semibold text-sm text-foreground mt-0.5">{detectedInstrument}</p>
-                      </div>
+                <div className="flex items-center justify-between gap-4 rounded-xl border bg-muted/40 p-3.5 shadow-sm">
+                  <div className="flex items-center gap-3 overflow-hidden">
+                    <div className="flex size-8 shrink-0 items-center justify-center rounded-lg border bg-background text-primary shadow-sm">
+                      <Cpu className={`size-4 ${isAnalyzing ? "animate-pulse" : ""}`} />
                     </div>
-
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="outline" size="sm" className="h-7 text-xs gap-1 px-2 shrink-0 border-dashed">
-                          Change
-                          <ChevronDown className="size-3 opacity-60" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-[280px] max-h-[240px] overflow-y-auto">
-                        {INSTRUMENT_PRESETS.map((preset) => (
-                          <DropdownMenuItem
-                            key={preset}
-                            onClick={() => {
-                              setDetectedInstrument(preset);
-                              setIsManualOverride(true);
-                            }}
-                            className={`text-xs cursor-pointer ${detectedInstrument === preset ? "bg-primary/5 font-medium text-primary" : ""}`}
-                          >
-                            {preset}
-                          </DropdownMenuItem>
-                        ))}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                    <div className="text-left overflow-hidden">
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/80">
+                        {isManualOverride ? "Manual Selected Override" : "Engine Identification Match"}
+                      </p>
+                      <p className="font-medium text-sm text-foreground mt-0.5 break-words line-clamp-2 leading-tight">
+                        {detectedInstrument}
+                      </p>
+                    </div>
                   </div>
+
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" size="sm" className="h-8 text-xs gap-1.5 px-3 shrink-0 font-medium">
+                        Change
+                        <ChevronDown className="size-3.5 opacity-60" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-[300px] max-h-[280px] overflow-y-auto">
+                      {INSTRUMENT_PRESETS.map((preset) => (
+                        <DropdownMenuItem
+                          key={preset}
+                          onClick={() => {
+                            setDetectedInstrument(preset);
+                            setIsManualOverride(true);
+                          }}
+                          className={`text-xs py-2 cursor-pointer ${detectedInstrument === preset ? "bg-primary/5 font-semibold text-primary focus:bg-primary/10" : ""}`}
+                        >
+                          {preset}
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
               )}
 
               {errorMessage && (
-                <div className="flex items-start gap-2 text-destructive mt-3 text-xs bg-destructive/10 p-2.5 rounded-lg border border-destructive/20">
+                <div className="flex items-start gap-2 text-destructive text-xs bg-destructive/5 p-3 rounded-lg border border-destructive/10">
                   <AlertCircle className="size-4 shrink-0 mt-0.5" />
-                  <span>{errorMessage}</span>
+                  <span className="font-medium">{errorMessage}</span>
                 </div>
               )}
             </div>
 
-            <DialogFooter className="gap-2 sm:gap-0">
+            <DialogFooter className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 pt-2 border-t">
               <Button variant="outline" onClick={() => handleOpenChange(false)} className="cursor-pointer">
                 Close
               </Button>
