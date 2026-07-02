@@ -248,6 +248,15 @@ export function DataSection() {
     }
   };
 
+  const handleDeleteReport = async (e: React.MouseEvent, id: string) => {
+    e.stopPropagation(); // Prevents card navigation trigger when clicking delete
+    try {
+      await deleteDoc(doc(db, "reports", id));
+    } catch (error) {
+      console.error("Error deleting document asset: ", error);
+    }
+  };
+
   return (
     <div className="flex flex-col gap-4 rounded-xl border bg-card p-6 text-card-foreground shadow-sm">
       <div className="flex items-center justify-between">
@@ -396,18 +405,48 @@ export function DataSection() {
             <div
               key={report.id}
               onClick={() => router.push(`/dashboard`)}
-              className="group relative flex flex-col gap-2 rounded-xl border bg-card p-4 shadow-xs transition-all hover:border-primary/50 hover:shadow-md cursor-pointer"
+              className="group relative flex flex-col gap-2 rounded-xl border bg-card p-4 shadow-sm transition-all hover:border-primary/50 hover:shadow-md cursor-pointer"
             >
               <div className="flex items-start justify-between gap-2">
                 <div className="flex items-center gap-2 overflow-hidden">
                   <div className="flex size-7 shrink-0 items-center justify-center rounded-lg border bg-muted text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary transition-colors">
                     <FileText className="size-4" />
                   </div>
-                  <h3 className="font-medium text-sm truncate">{report.name}</h3>
+                  <h3 className="font-medium text-sm truncate max-w-[140px] sm:max-w-[180px]">{report.name}</h3>
                 </div>
+
+                {/* Added Kebab Context Dropdown Menu Trigger to the card */}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="size-8 h-8 w-8 -mr-2 -mt-1 opacity-0 group-hover:opacity-100 transition-opacity focus:opacity-100 data-[state=open]:opacity-100 rounded-lg text-muted-foreground hover:text-foreground"
+                    >
+                      <MoreVertical className="size-4" />
+                      <span className="sr-only">Open menu</span>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-40">
+                    <DropdownMenuItem 
+                      onClick={(e) => { e.stopPropagation(); /* Share Logic */ }}
+                      className="gap-2 cursor-pointer text-xs"
+                    >
+                      <Share2 className="size-3.5 text-muted-foreground" />
+                      <span>Share</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem 
+                      onClick={(e) => handleDeleteReport(e, report.id)}
+                      className="gap-2 cursor-pointer text-xs text-destructive focus:text-destructive focus:bg-destructive/5"
+                    >
+                      <Trash2 className="size-3.5" />
+                      <span>Delete</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
               {report.description && (
-                <p className="text-xs text-muted-foreground line-clamp-2 pl-9">{report.description}</p>
+                <p className="text-xs text-muted-foreground line-clamp-2 pl-9 pr-2">{report.description}</p>
               )}
             </div>
           ))}
