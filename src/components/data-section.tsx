@@ -82,7 +82,8 @@ export function DataSection() {
       if (user) {
         setUserId(user.uid);
 
-        // Subscribing to query snapshot layout safely
+        // NOTE: If files disappear on refresh, open your Browser Inspect Console.
+        // Firestore requires a composite index for combinations of where() + orderBy().
         const q = query(
           collection(db, "reports"), 
           where("userId", "==", user.uid), 
@@ -96,7 +97,8 @@ export function DataSection() {
           });
           setReports(reportList);
         }, (error) => {
-          console.error("Snapshot listener failed: ", error);
+          console.error("CRITICAL FIRESTORE QUERY ERROR:", error.message);
+          console.error("Check if you need to create an index click the link inside your server logs terminal if visible.");
         });
 
         return () => unsubscribeSnapshot();
@@ -251,47 +253,49 @@ export function DataSection() {
     if (!selectedFile || !userId) return;
 
     try {
-      // Using serverTimestamp() fixes refresh tracking dropout indexing issues
       await addDoc(collection(db, "reports"), {
         name: selectedFile.name,
         description: `Instrument: ${detectedInstrument || "Unknown"} | Size: ${(selectedFile.size / 1024).toFixed(2)} KB`,
         userId: userId,
-        createdAt: serverTimestamp(),
+        createdAt: serverTimestamp(), // Server-side atomic clock syncing
       });
 
       clearSelection();
       setOpen(false);
     } catch (error) {
       console.error("Error adding report asset: ", error);
-      setErrorMessage("Failed to save report to database. Check database collection indices.");
+      setErrorMessage("Failed to write report. Confirm your Firestore rules permit creation.");
     }
   };
 
-  // EXECUTABLE ACTIONS MENU HANDLERS
+  // EXECUTING LOGIC HANDLERS
   const handleDeleteReport = async (e: React.MouseEvent, id: string) => {
     e.stopPropagation(); 
-    if (!confirm("Are you sure you want to delete this file report?")) return;
+    e.preventDefault();
+    if (!confirm("Are you sure you want to permanently delete this report file?")) return;
     
     try {
       await deleteDoc(doc(db, "reports", id));
     } catch (error) {
-      console.error("Error deleting document asset: ", error);
+      console.error("Failed to delete document from Firestore: ", error);
     }
   };
 
   const handleShareReport = (e: React.MouseEvent, report: Report) => {
     e.stopPropagation();
-    const shareData = {
-      title: report.name,
-      text: report.description,
-      url: window.location.origin + `/dashboard?reportId=${report.id}`
-    };
-
+    e.preventDefault();
+    
+    const targetUrl = `${window.location.origin}/dashboard?reportId=${report.id}`;
+    
     if (navigator.share) {
-      navigator.share(shareData).catch((err) => console.log("Error sharing:", err));
+      navigator.share({
+        title: report.name,
+        text: report.description,
+        url: targetUrl
+      }).catch((err) => console.log("Shared system aborted:", err));
     } else {
-      navigator.clipboard.writeText(shareData.url);
-      alert("Report link copied to clipboard!");
+      navigator.clipboard.writeText(targetUrl);
+      alert("Success! Link copied to your clipboard.");
     }
   };
 
@@ -454,7 +458,7 @@ export function DataSection() {
                 </div>
 
                 <DropdownMenu>
-                  <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                  <DropdownMenuTrigger asChild onClick={(e) => { e.stopPropagation(); e.preventDefault(); }}>
                     <Button 
                       variant="ghost" 
                       size="icon" 
@@ -465,17 +469,19 @@ export function DataSection() {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-40">
-                    {/* Delete positioned strictly on top of Share */}
+                    {/* Delete strictly mounted on top */}
                     <DropdownMenuItem 
                       onClick={(e) => handleDeleteReport(e, report.id)}
-                      className="gap-2 cursor-pointer text-xs text-destructive focus:text-destructive focus:bg-destructive/5"
+                      className="gap-2 cursor-pointer text-xs text-destructive focus:text-destructive focus:bg-destructive/5 font-medium"
                     >
                       <Trash2 className="size-3.5" />
                       <span>Delete</span>
                     </DropdownMenuItem>
+                    
+                    {/* Share mounted directly underneath */}
                     <DropdownMenuItem 
                       onClick={(e) => handleShareReport(e, report)}
-                      className="gap-2 cursor-pointer text-xs"
+                      className="gap-2 cursor-pointer text-xs font-medium"
                     >
                       <Share2 className="size-3.5 text-muted-foreground" />
                       <span>Share</span>
