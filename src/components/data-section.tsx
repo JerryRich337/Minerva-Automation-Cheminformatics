@@ -1,12 +1,20 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-
 import { useRouter } from "next/navigation";
-
 import { onAuthStateChanged } from "firebase/auth";
-import { addDoc, collection, deleteDoc, doc, onSnapshot, orderBy, query, where } from "firebase/firestore";
-import { FileText, MoreVertical, Plus, Share2, Trash2, UploadCloud, File, AlertCircle, X, Cpu, ChevronDown } from "lucide-react";
+import { 
+  addDoc, 
+  collection, 
+  deleteDoc, 
+  doc, 
+  onSnapshot, 
+  orderBy, 
+  query, 
+  where,
+  serverTimestamp 
+} from "firebase/firestore";
+import { FileText, Plus, Share2, Trash2, UploadCloud, File, AlertCircle, X, Cpu, ChevronDown, MoreVertical } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -74,7 +82,12 @@ export function DataSection() {
       if (user) {
         setUserId(user.uid);
 
-        const q = query(collection(db, "reports"), where("userId", "==", user.uid), orderBy("createdAt", "desc"));
+        // Subscribing to query snapshot layout safely
+        const q = query(
+          collection(db, "reports"), 
+          where("userId", "==", user.uid), 
+          orderBy("createdAt", "desc")
+        );
 
         const unsubscribeSnapshot = onSnapshot(q, (snapshot) => {
           const reportList: Report[] = [];
@@ -82,9 +95,14 @@ export function DataSection() {
             reportList.push({ id: document.id, ...document.data() } as Report);
           });
           setReports(reportList);
+        }, (error) => {
+          console.error("Snapshot listener failed: ", error);
         });
 
         return () => unsubscribeSnapshot();
+      } else {
+        setUserId(null);
+        setReports([]);
       }
     });
 
@@ -233,27 +251,47 @@ export function DataSection() {
     if (!selectedFile || !userId) return;
 
     try {
+      // Using serverTimestamp() fixes refresh tracking dropout indexing issues
       await addDoc(collection(db, "reports"), {
         name: selectedFile.name,
         description: `Instrument: ${detectedInstrument || "Unknown"} | Size: ${(selectedFile.size / 1024).toFixed(2)} KB`,
         userId: userId,
-        createdAt: new Date(),
+        createdAt: serverTimestamp(),
       });
 
       clearSelection();
       setOpen(false);
-      router.push(`/dashboard`);
     } catch (error) {
       console.error("Error adding report asset: ", error);
+      setErrorMessage("Failed to save report to database. Check database collection indices.");
     }
   };
 
+  // EXECUTABLE ACTIONS MENU HANDLERS
   const handleDeleteReport = async (e: React.MouseEvent, id: string) => {
-    e.stopPropagation(); // Prevents card navigation trigger when clicking delete
+    e.stopPropagation(); 
+    if (!confirm("Are you sure you want to delete this file report?")) return;
+    
     try {
       await deleteDoc(doc(db, "reports", id));
     } catch (error) {
       console.error("Error deleting document asset: ", error);
+    }
+  };
+
+  const handleShareReport = (e: React.MouseEvent, report: Report) => {
+    e.stopPropagation();
+    const shareData = {
+      title: report.name,
+      text: report.description,
+      url: window.location.origin + `/dashboard?reportId=${report.id}`
+    };
+
+    if (navigator.share) {
+      navigator.share(shareData).catch((err) => console.log("Error sharing:", err));
+    } else {
+      navigator.clipboard.writeText(shareData.url);
+      alert("Report link copied to clipboard!");
     }
   };
 
@@ -415,7 +453,6 @@ export function DataSection() {
                   <h3 className="font-medium text-sm truncate max-w-[140px] sm:max-w-[180px]">{report.name}</h3>
                 </div>
 
-                {/* Added Kebab Context Dropdown Menu Trigger to the card */}
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
                     <Button 
@@ -428,19 +465,20 @@ export function DataSection() {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-40">
-                    <DropdownMenuItem 
-                      onClick={(e) => { e.stopPropagation(); /* Share Logic */ }}
-                      className="gap-2 cursor-pointer text-xs"
-                    >
-                      <Share2 className="size-3.5 text-muted-foreground" />
-                      <span>Share</span>
-                    </DropdownMenuItem>
+                    {/* Delete positioned strictly on top of Share */}
                     <DropdownMenuItem 
                       onClick={(e) => handleDeleteReport(e, report.id)}
                       className="gap-2 cursor-pointer text-xs text-destructive focus:text-destructive focus:bg-destructive/5"
                     >
                       <Trash2 className="size-3.5" />
                       <span>Delete</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem 
+                      onClick={(e) => handleShareReport(e, report)}
+                      className="gap-2 cursor-pointer text-xs"
+                    >
+                      <Share2 className="size-3.5 text-muted-foreground" />
+                      <span>Share</span>
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
