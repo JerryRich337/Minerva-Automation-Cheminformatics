@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 
 import { onAuthStateChanged } from "firebase/auth";
 import { addDoc, collection, deleteDoc, doc, onSnapshot, orderBy, query, where } from "firebase/firestore";
-import { FileText, MoreVertical, Plus, Share2, Trash2, UploadCloud, File, AlertCircle, X, Cpu } from "lucide-react";
+import { FileText, MoreVertical, Plus, Share2, Trash2, UploadCloud, File, AlertCircle, X, Cpu, ChevronDown } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -39,6 +39,22 @@ const ALLOWED_EXTENSIONS = [
   "jcamp-dx", "fastq", "fasta", "bam", "vcf", "hdf5", "parquet"
 ];
 
+// Target focus instruments for manual drop menu toggle overriding
+const INSTRUMENT_PRESETS = [
+  "High-Performance Liquid Chromatography (HPLC System)",
+  "Liquid Chromatography-Mass Spectrometry (LC-MS/MS)",
+  "Gas Chromatography-Mass Spectrometry (GC-MS)",
+  "BD Flow Cytometer (FCS Core System)",
+  "Thermo Scientific / Agilent Mass Spectrometer",
+  "Bruker / Waters Mass Spectrometer",
+  "FTIR / NMR Spectrometer (JCAMP-DX Standard)",
+  "Illumina NextSeq / NovaSeq Sequencer",
+  "Sanger / Oxford Nanopore Genetic Sequencer",
+  "Real-Time PCR Cycler (qPCR System)",
+  "UV-Vis Microplate Spectrophotometer",
+  "Generic Tabular Matrix Table"
+];
+
 export function DataSection() {
   const [open, setOpen] = useState(false);
   const [reports, setReports] = useState<Report[]>([]);
@@ -52,6 +68,7 @@ export function DataSection() {
   // Instrument Detection Engine State
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [detectedInstrument, setDetectedInstrument] = useState<string | null>(null);
+  const [isManualOverride, setIsManualOverride] = useState(false);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
@@ -78,26 +95,26 @@ export function DataSection() {
     return () => unsubscribeAuth();
   }, []);
 
-  // INSTRUMENT DETECTION ENGINE
+  // ENHANCED INSTRUMENT DETECTION ENGINE
   const analyzeInstrument = (file: File) => {
     setIsAnalyzing(true);
     setDetectedInstrument("Analyzing layout signatures...");
+    setIsManualOverride(false);
 
     const filename = file.name.toLowerCase();
     const extension = ALLOWED_EXTENSIONS.find(ext => filename.endsWith(`.${ext}`)) || "";
 
-    // Read the first 4096 bytes for header/magic byte/structure inspection
     const reader = new FileReader();
     
     reader.onload = (e) => {
       const arrayBuffer = e.target?.result as ArrayBuffer;
       if (!arrayBuffer) {
-        setDetectedInstrument("Generic Data Engine File");
+        setDetectedInstrument("Generic Tabular Matrix Table");
         setIsAnalyzing(false);
         return;
       }
 
-      // 1. Binary Signature / Magic Byte Check
+      // 1. Binary Signature Check
       const uint8 = new Uint8Array(arrayBuffer.slice(0, 4));
       let magicBytes = "";
       for (let i = 0; i < uint8.length; i++) {
@@ -107,50 +124,51 @@ export function DataSection() {
       // Convert to text string to inspect textual headers (Metadata/Structure Detector)
       const textDecoder = new TextDecoder("utf-8");
       const headerText = textDecoder.decode(new Uint8Array(arrayBuffer));
+      const headerTextLower = headerText.toLowerCase();
 
-      let instrumentName = "Unknown / Standard Analytical Tool";
+      let instrumentName = "Generic Tabular Matrix Table";
 
-      // 2. Multi-Tiered Evaluation (Extension -> Magic Bytes -> Structure -> Metadata)
+      // 2. High-Performance Chromatography Deep Capabilities Match
+      const hplcKeywords = [
+        "hplc", "chromatogram", "retention time", "ret.time", "r.time", "m/z", 
+        "absorbance", "wavelength", "peak table", "peak list", "area%", "height",
+        "elution", "flow rate", "pump", "detector channel", "injection volume"
+      ];
+
+      const matchesHplcKeywords = hplcKeywords.some(keyword => headerTextLower.includes(keyword)) || 
+                                   filename.includes("hplc") || 
+                                   filename.includes("chrom");
+
       if (magicBytes === "504b0304" && extension === "xlsx") {
-        // Excel file layout detection
-        instrumentName = "Microsoft Excel Sheet Asset";
+        instrumentName = matchesHplcKeywords 
+          ? "High-Performance Liquid Chromatography (HPLC System)" 
+          : "Microsoft Excel Sheet Asset";
       } else if (magicBytes === "89484446") {
         instrumentName = "HDF5 Scientific Storage Container";
       } else if (magicBytes === "4e414d45" || filename.endsWith(".fcs")) {
         instrumentName = "BD Flow Cytometer (FCS Core System)";
-      } else if (magicBytes === "1f8b0800" || extension === "zip") {
-        instrumentName = "Compressed Data Archive Paket";
       } else if (extension === "mzml" || headerText.includes("<mzML") || headerText.includes("http://psi.hupo.org/ms/mzml")) {
-        instrumentName = "Thermo Scientific / Agilent Mass Spectrometer (mzML)";
+        instrumentName = "Thermo Scientific / Agilent Mass Spectrometer";
       } else if (extension === "mzxml" || headerText.includes("<mzXML")) {
-        instrumentName = "Bruker / Waters Mass Spectrometer (mzXML)";
+        instrumentName = "Bruker / Waters Mass Spectrometer";
       } else if (extension === "jcamp-dx" || headerText.includes("##TITLE") || headerText.includes("##JCAMP")) {
         instrumentName = "FTIR / NMR Spectrometer (JCAMP-DX Standard)";
       } else if (extension === "fastq" || headerText.startsWith("@")) {
-        instrumentName = "Illumina NextSeq / NovaSeq Sequencer (FASTQ)";
+        instrumentName = "Illumina NextSeq / NovaSeq Sequencer";
       } else if (extension === "fasta" || headerText.startsWith(">")) {
-        instrumentName = "Sanger / Oxford Nanopore Genetic Sequencer (FASTA)";
+        instrumentName = "Sanger / Oxford Nanopore Genetic Sequencer";
       } else if (extension === "vcf" || headerText.includes("##fileformat=VCF")) {
         instrumentName = "GATK Variant Caller Pipeline (VCF Data)";
       } else if (extension === "rdml" || headerText.includes("<rdml")) {
-        instrumentName = "Real-Time PCR Cycler (qPCR RDML format)";
-      } else if (headerText.includes("wavelen") || headerText.includes("absorbance")) {
-        instrumentName = "UV-Vis Microplate Spectrophotometer (Tabular)";
-      } else if (extension === "csv" || extension === "tsv") {
-        // Inspect row layout headers
-        if (headerText.includes("Retention Time") || headerText.includes("m/z")) {
-          instrumentName = "LC-MS Chromatography System (CSV Log)";
+        instrumentName = "Real-Time PCR Cycler (qPCR System)";
+      } else if (extension === "csv" || extension === "tsv" || extension === "txt") {
+        if (matchesHplcKeywords) {
+          instrumentName = "High-Performance Liquid Chromatography (HPLC System)";
         } else if (headerText.includes("Compound") || headerText.includes("SMILES")) {
           instrumentName = "Cheminformatics Structure Library Export";
         } else {
           instrumentName = "Generic Tabular Matrix Table";
         }
-      } else if (extension === "json") {
-        instrumentName = "Structured Platform API Snapshot (JSON)";
-      } else if (extension === "xml") {
-        instrumentName = "Standard Metadata Manifest Configuration (XML)";
-      } else if (extension === "txt") {
-        instrumentName = "Raw Instrument Terminal Printout (TXT)";
       }
 
       setDetectedInstrument(instrumentName);
@@ -158,20 +176,17 @@ export function DataSection() {
     };
 
     reader.onerror = () => {
-      setDetectedInstrument("Fallback File Reader Pipeline");
+      setDetectedInstrument("Generic Tabular Matrix Table");
       setIsAnalyzing(false);
     };
 
-    // Slice first 4KB to run inspection tasks without lagging browser frame loops
+    // Slice 4KB block to verify structure layout text safely
     const blobSlice = file.slice(0, 4096);
     reader.readAsArrayBuffer(blobSlice);
   };
 
-  // Helper to strictly validate file extension strings
   const validateFile = (file: File) => {
     const filename = file.name.toLowerCase();
-    
-    // Check multi-segment extensions first (e.g., .ome-tiff, .jcamp-dx)
     const matchedExtension = ALLOWED_EXTENSIONS.find(ext => filename.endsWith(`.${ext}`));
     
     if (matchedExtension) {
@@ -185,7 +200,6 @@ export function DataSection() {
     }
   };
 
-  // Drag handlers
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(true);
@@ -213,10 +227,10 @@ export function DataSection() {
     setSelectedFile(null);
     setErrorMessage(null);
     setDetectedInstrument(null);
+    setIsManualOverride(false);
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
-  // Safe tracking for dialog closing triggers to reset state
   const handleOpenChange = (isOpen: boolean) => {
     setOpen(isOpen);
     if (!isOpen) {
@@ -228,8 +242,7 @@ export function DataSection() {
     if (!selectedFile || !userId) return;
 
     try {
-      // Setup file description tracking logic for processing downstream
-      const docRef = await addDoc(collection(db, "reports"), {
+      await addDoc(collection(db, "reports"), {
         name: selectedFile.name,
         description: `Instrument: ${detectedInstrument || "Unknown"} | Size: ${(selectedFile.size / 1024).toFixed(2)} KB`,
         userId: userId,
@@ -238,27 +251,10 @@ export function DataSection() {
 
       clearSelection();
       setOpen(false);
-      // Fallback fallback forward route matching since template route wasn't generated yet
       router.push(`/dashboard`);
     } catch (error) {
       console.error("Error adding report asset: ", error);
     }
-  };
-
-  const handleDelete = async (reportId: string) => {
-    if (confirm("Are you sure you want to delete this report? This cannot be undone.")) {
-      try {
-        await deleteDoc(doc(db, "reports", reportId));
-      } catch (error) {
-        console.error("Error deleting report:", error);
-      }
-    }
-  };
-
-  const handleShare = (reportId: string) => {
-    const url = `${window.location.origin}/dashboard/reports/${reportId}`;
-    navigator.clipboard.writeText(url);
-    alert("Report link copied to clipboard!");
   };
 
   return (
@@ -336,13 +332,42 @@ export function DataSection() {
                 )}
               </div>
 
-              {/* Dynamic Instrument Fingerprint Engine Response UI Block */}
+              {/* Enhanced Detection Engine and Interactive Selection Menu Override */}
               {selectedFile && detectedInstrument && (
-                <div className="flex items-center gap-2.5 mt-3 text-xs bg-muted border border-border p-3 rounded-lg">
-                  <Cpu className={`size-4 text-primary ${isAnalyzing ? "animate-pulse" : ""}`} />
-                  <div className="overflow-hidden text-left">
-                    <p className="font-medium text-muted-foreground uppercase tracking-wider text-[10px]">Engine Identification Match</p>
-                    <p className="text-foreground font-semibold truncate mt-0.5">{detectedInstrument}</p>
+                <div className="mt-3 flex flex-col gap-2 rounded-lg border border-border bg-muted/50 p-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2.5 overflow-hidden">
+                      <Cpu className={`size-4 text-primary shrink-0 ${isAnalyzing ? "animate-pulse" : ""}`} />
+                      <div className="text-left overflow-hidden">
+                        <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+                          {isManualOverride ? "Manual Selected Override" : "Engine Identification Match"}
+                        </p>
+                        <p className="truncate font-semibold text-sm text-foreground mt-0.5">{detectedInstrument}</p>
+                      </div>
+                    </div>
+
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="outline" size="sm" className="h-7 text-xs gap-1 px-2 shrink-0 border-dashed">
+                          Change
+                          <ChevronDown className="size-3 opacity-60" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-[280px] max-h-[240px] overflow-y-auto">
+                        {INSTRUMENT_PRESETS.map((preset) => (
+                          <DropdownMenuItem
+                            key={preset}
+                            onClick={() => {
+                              setDetectedInstrument(preset);
+                              setIsManualOverride(true);
+                            }}
+                            className={`text-xs cursor-pointer ${detectedInstrument === preset ? "bg-primary/5 font-medium text-primary" : ""}`}
+                          >
+                            {preset}
+                          </DropdownMenuItem>
+                        ))}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
                 </div>
               )}
@@ -386,45 +411,7 @@ export function DataSection() {
                   </div>
                   <h3 className="font-medium text-sm truncate">{report.name}</h3>
                 </div>
-
-                <div onClick={(e) => e.stopPropagation()}>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 -mr-2 -mt-1 opacity-0 group-hover:opacity-100 transition-opacity focus:opacity-100 data-[state=open]:opacity-100"
-                      >
-                        <MoreVertical className="size-4" />
-                        <span className="sr-only">Open menu</span>
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-[160px]">
-                      <DropdownMenuItem
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDelete(report.id);
-                        }}
-                        className="text-red-600 focus:bg-red-50 focus:text-red-600 cursor-pointer"
-                      >
-                        <Trash2 className="mr-2 size-4" />
-                        Delete
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleShare(report.id);
-                        }}
-                        className="cursor-pointer"
-                      >
-                        <Share2 className="mr-2 size-4" />
-                        Share
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
               </div>
-
               {report.description && (
                 <p className="text-xs text-muted-foreground line-clamp-2 pl-9">{report.description}</p>
               )}
