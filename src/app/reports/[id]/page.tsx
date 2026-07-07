@@ -4,10 +4,11 @@ import { useEffect, useState, use } from "react";
 import { useRouter } from "next/navigation";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import { ChevronRight, FileText, ArrowLeft, Layers, BarChart3, Table2, Sliders, FlaskConical, ShieldAlert, AlertCircle, CheckCircle2 } from "lucide-react";
+import { ChevronRight, FileText, ArrowLeft, Layers, BarChart3, Table2, Sliders, FlaskConical, ShieldAlert, CheckCircle2, ClipboardCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { buildHPLCExperiment } from "@/utils/hplc-experiment-builder";
 import { runHPLCValidation } from "@/utils/hplc-validation-engine";
+import { generateHPLCSummary } from "@/utils/hplc-summary-engine";
 
 interface ReportPageProps {
   params: Promise<{ id: string }>;
@@ -55,8 +56,10 @@ export default function ReportDetailPage({ params }: ReportPageProps) {
 
   const hplc = report.parsedHPLCData;
   const experiment = hplc ? buildHPLCExperiment(hplc) : null;
-  // Compute the deterministic validation metrics dynamically 
   const validationResult = experiment ? runHPLCValidation(experiment) : null;
+  
+  // Compute factual metadata profile snapshot metrics dynamically
+  const summaryResult = (experiment) ? generateHPLCSummary(experiment, validationResult) : null;
 
   return (
     <div className="min-h-screen bg-background p-6 md:p-10 text-foreground">
@@ -198,6 +201,42 @@ export default function ReportDetailPage({ params }: ReportPageProps) {
                   </div>
                   <pre className="bg-background/80 p-3 rounded-lg text-foreground font-mono border">
                     {JSON.stringify(validationResult, null, 2)}
+                  </pre>
+                </div>
+              </details>
+            )}
+
+            {/* FACTUAL METRICS SUMMARY VIEW SECTION */}
+            {summaryResult && (
+              <details className="group border border-muted-foreground/30 rounded-xl bg-muted/20 transition-all" open>
+                <summary className="flex items-center justify-between p-4 font-semibold text-sm select-none cursor-pointer list-none text-foreground/90 [&::-webkit-details-marker]:hidden">
+                  <div className="flex items-center gap-3">
+                    <ClipboardCheck className="size-4 text-muted-foreground" />
+                    <span>HPLC Experiment Summary Metrics Profile</span>
+                  </div>
+                  <ChevronRight className="size-4 transition-transform group-open:rotate-90" />
+                </summary>
+                <div className="px-4 pb-4 pt-1 border-t border-dashed border-muted-foreground/20 text-xs overflow-y-auto">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 my-2 text-[11px]">
+                    <div className="p-2 border rounded bg-card">
+                      <span className="text-muted-foreground block">Samples Monitored</span>
+                      <strong className="text-sm">{summaryResult.sampleCount} Injections</strong>
+                    </div>
+                    <div className="p-2 border rounded bg-card">
+                      <span className="text-muted-foreground block">Resolved Peak Items</span>
+                      <strong className="text-sm">{summaryResult.peakCount} Rows</strong>
+                    </div>
+                    <div className="p-2 border rounded bg-card">
+                      <span className="text-muted-foreground block">Run Duration Bounds</span>
+                      <strong className="text-sm">{summaryResult.runDurationMinutes || "N/A"} min</strong>
+                    </div>
+                    <div className="p-2 border rounded bg-card">
+                      <span className="text-muted-foreground block">System Profile / Method</span>
+                      <strong className="text-[10px] block truncate text-muted-foreground mt-0.5">{summaryResult.method}</strong>
+                    </div>
+                  </div>
+                  <pre className="bg-background/80 p-3 rounded-lg text-muted-foreground font-mono border text-[11px] mt-2">
+                    {JSON.stringify(summaryResult, null, 2)}
                   </pre>
                 </div>
               </details>
