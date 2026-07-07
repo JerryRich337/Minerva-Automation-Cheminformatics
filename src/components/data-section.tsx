@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { onAuthStateChanged } from "firebase/auth";
+import { parseHPLCFile } from "@/utils/hplc-parser";
 import { 
   addDoc, 
   collection, 
@@ -308,16 +309,28 @@ export function DataSection() {
         counter++;
       }
 
+      let parsedHPLCData = null;
+      
+      // Exact structural parsing trigger requirement
+      if (detectedInstrument === "High-Performance Liquid Chromatography (HPLC System)") {
+        parsedHPLCData = await parseHPLCFile(selectedFile, uploadSession);
+      }
+
       const reportsCollection = collection(db, "reports");
-      await addDoc(reportsCollection, {
+      const docRef = await addDoc(reportsCollection, {
         name: finalName,
         description: `Instrument: ${detectedInstrument || "Unknown Instrument"} | Size: ${(uploadSession.size / 1024).toFixed(2)} KB | Checksum: ${uploadSession.checksum.substring(0, 8)}`,
         userId: userId,
         createdAt: serverTimestamp(),
+        // Append the nested raw structured blocks safely into the report record
+        parsedHPLCData: parsedHPLCData
       });
 
       clearSelection();
       setOpen(false);
+      
+      // Redirect cleanly to a dedicated dynamic page setup using the created doc configuration ID
+      router.push(`/reports/${docRef.id}`);
       
     } catch (error: any) {
       console.error("FIRESTORE WRITE ERROR:", error);
@@ -529,7 +542,13 @@ export function DataSection() {
           {reports.map((report) => (
             <div
               key={report.id}
-              onClick={() => router.push(`/dashboard`)}
+              onClick={() => {
+                if (report.description?.includes("HPLC System")) {
+                  router.push(`/reports/${report.id}`);
+                } else {
+                  router.push(`/`);
+                }
+              }}
               className="group relative flex flex-col gap-2 rounded-xl border bg-card p-4 shadow-sm transition-all hover:border-primary/50 hover:shadow-md cursor-pointer"
             >
               <div className="flex items-start justify-between gap-2">
