@@ -209,46 +209,47 @@ export default function ReportDetailPage({ params }: ReportPageProps) {
             )}
 
             {/* FACTUAL METRICS SUMMARY VIEW SECTION */}
+
             {summaryResult && (
-              <details className="group border border-muted-foreground/30 rounded-xl bg-muted/20 transition-all" open>
-                <summary className="flex items-center justify-between p-4 font-semibold text-sm select-none cursor-pointer list-none text-foreground/90 [&::-webkit-details-marker]:hidden">
-                  <div className="flex items-center gap-3">
-                    <ClipboardCheck className="size-4 text-muted-foreground" />
-                    <span>HPLC Experiment Summary Metrics Profile</span>
-                  </div>
-                  <ChevronRight className="size-4 transition-transform group-open:rotate-90" />
-                </summary>
-                <div className="px-4 pb-4 pt-1 border-t border-dashed border-muted-foreground/20 text-xs overflow-y-auto">
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 my-2 text-[11px]">
-                    <div className="p-2 border rounded bg-card">
-                      <span className="text-muted-foreground block">Samples Monitored</span>
-                      <strong className="text-sm">{summaryResult.sampleCount} Injections</strong>
+                <details className="group border border-muted-foreground/30 rounded-xl bg-muted/20 transition-all" open>
+                    <summary className="flex items-center justify-between p-4 font-semibold text-sm select-none cursor-pointer list-none text-foreground/90 [&amp;::-webkit-details-marker]:hidden">
+                    <div className="flex items-center gap-3">
+                        <ClipboardCheck className="size-4 text-muted-foreground" />
+                        <span>HPLC Experiment Summary Metrics Profile</span>
                     </div>
-                    <div className="p-2 border rounded bg-card">
-                      <span className="text-muted-foreground block">Resolved Peak Items</span>
-                      <strong className="text-sm">{summaryResult.peakCount} Rows</strong>
+                    <ChevronRight className="size-4 transition-transform group-open:rotate-90" />
+                    </summary>
+                    <div className="px-4 pb-4 pt-1 border-t border-dashed border-muted-foreground/20 text-xs overflow-y-auto">
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 my-2 text-[11px]">
+                        <div className="p-2 border rounded bg-card">
+                        <span className="text-muted-foreground block">Samples Monitored</span>
+                        <strong className="text-sm">{summaryResult.sampleCount} Injections</strong>
+                        </div>
+                        <div className="p-2 border rounded bg-card">
+                        <span className="text-muted-foreground block">Resolved Peak Items</span>
+                        <strong className="text-sm">{summaryResult.peakCount} Rows</strong>
+                        </div>
+                        <div className="p-2 border rounded bg-card">
+                        <span className="text-muted-foreground block">Run Duration Bounds</span>
+                        <strong className="text-sm">{summaryResult.runDurationMinutes || "N/A"} min</strong>
+                        </div>
+                        <div className="p-2 border rounded bg-card">
+                        <span className="text-muted-foreground block">System Profile / Method</span>
+                        <strong className="text-[10px] block truncate text-muted-foreground mt-0.5">{summaryResult.method}</strong>
+                        </div>
                     </div>
-                    <div className="p-2 border rounded bg-card">
-                      <span className="text-muted-foreground block">Run Duration Bounds</span>
-                      <strong className="text-sm">{summaryResult.runDurationMinutes || "N/A"} min</strong>
+                    
+                    {/* StructuredData rendered standalone right under the summary profile header container */}
+                    {structuredData && (
+                        <div className="mt-4 border-t border-dashed pt-3">
+                        <span className="text-[11px] font-semibold text-muted-foreground block mb-2">StructuredData Array Maps:</span>
+                        <pre className="bg-background/80 p-3 rounded-lg text-foreground font-mono border max-h-72 overflow-y-auto text-[11px]">
+                            {JSON.stringify(structuredData, null, 2)}
+                        </pre>
+                        </div>
+                    )}
                     </div>
-                    <div className="p-2 border rounded bg-card">
-                      <span className="text-muted-foreground block">System Profile / Method</span>
-                      <strong className="text-[10px] block truncate text-muted-foreground mt-0.5">{summaryResult.method}</strong>
-                    </div>
-                  </div>
-                  
-                  {/* StructuredData Rendering Hook */}
-                  {structuredData && (
-                    <div className="mt-4 border-t border-dashed pt-3">
-                      <span className="text-[11px] font-semibold text-muted-foreground block mb-2">Engine StructuredData Output:</span>
-                      <pre className="bg-background/80 p-3 rounded-lg text-foreground font-mono border max-h-72 overflow-y-auto text-[11px]">
-                        {JSON.stringify(structuredData, null, 2)}
-                      </pre>
-                    </div>
-                  )}
-                </div>
-              </details>
+                </details>
             )}
 
           </div>
