@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { buildHPLCExperiment } from "@/utils/hplc-experiment-builder";
 import { runHPLCValidation } from "@/utils/hplc-validation-engine";
 import { generateHPLCSummary } from "@/utils/hplc-summary-engine";
+import { generateStructuredVisualizationData } from "@/utils/hplc-visualization-engine";
 
 interface ReportPageProps {
   params: Promise<{ id: string }>;
@@ -57,9 +58,10 @@ export default function ReportDetailPage({ params }: ReportPageProps) {
   const hplc = report.parsedHPLCData;
   const experiment = hplc ? buildHPLCExperiment(hplc) : null;
   const validationResult = experiment ? runHPLCValidation(experiment) : null;
+  const summaryResult = experiment ? generateHPLCSummary(experiment, validationResult) : null;
   
-  // Compute factual metadata profile snapshot metrics dynamically
-  const summaryResult = (experiment) ? generateHPLCSummary(experiment, validationResult) : null;
+  // Dynamically structuralize coordinate collections for chart presentation hooks
+  const structuredData = experiment ? generateStructuredVisualizationData(experiment) : null;
 
   return (
     <div className="min-h-screen bg-background p-6 md:p-10 text-foreground">
@@ -235,9 +237,16 @@ export default function ReportDetailPage({ params }: ReportPageProps) {
                       <strong className="text-[10px] block truncate text-muted-foreground mt-0.5">{summaryResult.method}</strong>
                     </div>
                   </div>
-                  <pre className="bg-background/80 p-3 rounded-lg text-muted-foreground font-mono border text-[11px] mt-2">
-                    {JSON.stringify(summaryResult, null, 2)}
-                  </pre>
+                  
+                  {/* StructuredData Rendering Hook */}
+                  {structuredData && (
+                    <div className="mt-4 border-t border-dashed pt-3">
+                      <span className="text-[11px] font-semibold text-muted-foreground block mb-2">Engine StructuredData Output:</span>
+                      <pre className="bg-background/80 p-3 rounded-lg text-foreground font-mono border max-h-72 overflow-y-auto text-[11px]">
+                        {JSON.stringify(structuredData, null, 2)}
+                      </pre>
+                    </div>
+                  )}
                 </div>
               </details>
             )}
