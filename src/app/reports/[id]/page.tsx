@@ -4,9 +4,10 @@ import { useEffect, useState, use } from "react";
 import { useRouter } from "next/navigation";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import { ChevronRight, FileText, ArrowLeft, Layers, BarChart3, Table2, Sliders, FlaskConical } from "lucide-react";
+import { ChevronRight, FileText, ArrowLeft, Layers, BarChart3, Table2, Sliders, FlaskConical, ShieldAlert, AlertCircle, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { buildHPLCExperiment } from "@/utils/hplc-experiment-builder";
+import { runHPLCValidation } from "@/utils/hplc-validation-engine";
 
 interface ReportPageProps {
   params: Promise<{ id: string }>;
@@ -53,8 +54,9 @@ export default function ReportDetailPage({ params }: ReportPageProps) {
   }
 
   const hplc = report.parsedHPLCData;
-  // Generate the unified domain experiment layout structure dynamically if data exists
   const experiment = hplc ? buildHPLCExperiment(hplc) : null;
+  // Compute the deterministic validation metrics dynamically 
+  const validationResult = experiment ? runHPLCValidation(experiment) : null;
 
   return (
     <div className="min-h-screen bg-background p-6 md:p-10 text-foreground">
@@ -173,6 +175,29 @@ export default function ReportDetailPage({ params }: ReportPageProps) {
                   </p>
                   <pre className="bg-background/80 p-3 rounded-lg text-foreground font-mono border">
                     {JSON.stringify(experiment, null, 2)}
+                  </pre>
+                </div>
+              </details>
+            )}
+
+            {/* DOMAIN VALIDATION VIEW SECTION */}
+            {validationResult && (
+              <details className={`group border-2 rounded-xl transition-all ${validationResult.isValid ? 'border-emerald-500/20 bg-emerald-500/5' : 'border-amber-500/20 bg-amber-500/5'}`} open>
+                <summary className={`flex items-center justify-between p-4 font-semibold text-sm select-none cursor-pointer list-none [&::-webkit-details-marker]:hidden ${validationResult.isValid ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'}`}>
+                  <div className="flex items-center gap-3">
+                    {validationResult.isValid ? <CheckCircle2 className="size-4" /> : <ShieldAlert className="size-4" />}
+                    <span>Deterministic HPLC Validation Engine Workspace</span>
+                  </div>
+                  <ChevronRight className="size-4 transition-transform group-open:rotate-90" />
+                </summary>
+                <div className="px-4 pb-4 pt-1 border-t border-dashed border-muted-foreground/20 text-xs max-h-96 overflow-y-auto">
+                  <div className="flex items-center gap-4 my-2 p-2 rounded bg-background/50 border font-medium text-[11px]">
+                    <span className="text-destructive">Errors: {validationResult.summary.errors}</span>
+                    <span className="text-amber-500">Warnings: {validationResult.summary.warnings}</span>
+                    <span className="text-blue-400">Info Notes: {validationResult.summary.infos}</span>
+                  </div>
+                  <pre className="bg-background/80 p-3 rounded-lg text-foreground font-mono border">
+                    {JSON.stringify(validationResult, null, 2)}
                   </pre>
                 </div>
               </details>
