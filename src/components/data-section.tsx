@@ -40,6 +40,15 @@ interface Report {
   description: string;
 }
 
+interface UploadSession {
+  filename: string;
+  extension: string;
+  mimeType: string;
+  size: number;
+  checksum: string;
+  uploadTimestamp: number;
+}
+
 const ALLOWED_EXTENSIONS = [
   "csv", "tsv", "txt", "xlsx", "json", "xml", "zip", 
   "mzml", "mzxml", "fcs", "rdml", "ome-tiff", "tiff", 
@@ -67,6 +76,7 @@ export function DataSection() {
   const [userId, setUserId] = useState<string | null>(null);
   
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [uploadSession, setUploadSession] = useState<UploadSession | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   
@@ -199,10 +209,12 @@ export function DataSection() {
     
     if (matchedExtension) {
       setSelectedFile(file);
+      setUploadSession(null); // Clear previous sessions until OK is hit
       setErrorMessage(null);
       analyzeInstrument(file);
     } else {
       setSelectedFile(null);
+      setUploadSession(null);
       setDetectedInstrument(null);
       setErrorMessage("Unsupported file type. Please upload a valid data platform file format.");
     }
@@ -233,6 +245,7 @@ export function DataSection() {
 
   const clearSelection = () => {
     setSelectedFile(null);
+    setUploadSession(null);
     setErrorMessage(null);
     setDetectedInstrument(null);
     setIsManualOverride(false);
@@ -246,11 +259,18 @@ export function DataSection() {
     }
   };
 
+  const generateChecksum = async (file: File): Promise<string> => {
+    const arrayBuffer = await file.arrayBuffer();
+    const hashBuffer = await crypto.subtle.digest("SHA-256", arrayBuffer);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2, "0")).join("");
+  };
+
   const handleOkClick = async () => {
     if (!selectedFile || !userId) return;
 
     try {
-      // Deduplication naming algorithm
+      // 1. Deduplication naming computation
       const originalName = selectedFile.name;
       const lastDotIndex = originalName.lastIndexOf(".");
       
@@ -259,36 +279,43 @@ export function DataSection() {
       
       if (lastDotIndex !== -1) {
         baseName = originalName.substring(0, lastDotIndex);
-        extension = originalName.substring(lastDotIndex); // includes the dot (e.g., ".csv")
+        extension = originalName.substring(lastDotIndex);
       }
 
       let finalName = originalName;
       let counter = 1;
-
-      // Extract existing report names for checking
       const existingNames = reports.map(r => r.name);
 
-      // Sequentially find an available file index name variation
       while (existingNames.includes(finalName)) {
         finalName = `${baseName}(${counter})${extension}`;
         counter++;
       }
 
-      const reportsCollection = collection(db, "reports");
+      // 2. Compute upload session parameters without full text parsing
+      const fileChecksum = await generateChecksum(selectedFile);
+      const computedSession: UploadSession = {
+        filename: finalName,
+        extension: extension.replace(".", ""),
+        mimeType: selectedFile.type || "application/octet-stream",
+        size: selectedFile.size,
+        checksum: fileChecksum,
+        uploadTimestamp: Date.now()
+      };
 
+      setUploadSession(computedSession);
+
+      // 3. Save to database
+      const reportsCollection = collection(db, "reports");
       await addDoc(reportsCollection, {
-        name: finalName,
-        description: `Instrument: ${detectedInstrument || "Unknown Instrument"} | Size: ${(selectedFile.size / 1024).toFixed(2)} KB`,
+        name: computedSession.filename,
+        description: `Instrument: ${detectedInstrument || "Unknown Instrument"} | Size: ${(computedSession.size / 1024).toFixed(2)} KB | SHA256: ${computedSession.checksum.substring(0, 8)}...`,
         userId: userId,
         createdAt: serverTimestamp(),
       });
-
-      clearSelection();
-      setOpen(false);
       
     } catch (error: any) {
       console.error("FIRESTORE WRITE ERROR:", error);
-      setErrorMessage("Failed to save report. Open your browser console for tracking errors.");
+      setErrorMessage("Failed to save report layout metadata.");
     }
   };
 
@@ -399,7 +426,39 @@ export function DataSection() {
                 )}
               </div>
 
-              {selectedFile && detectedInstrument && (
+              {/* Upload Session Parameters Output Container */}
+              {uploadSession && (
+                <div className="flex w-full items-center justify-between gap-3 bg-background p-3 rounded-lg border shadow-sm">
+                  <div className="flex items-center gap-3 overflow-hidden">
+                    <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" className="lucide lucide-file size-4" aria-hidden="true">
+                        <path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"></path>
+                        <path d="M14 2v5a1 1 0 0 0 1 1h5"></path>
+                      </svg>
+                    </div>
+                    <div className="text-left overflow-hidden">
+                      <p className="text-sm font-medium text-foreground truncate max-w-[240px]">
+                        {uploadSession.filename}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {(uploadSession.size / 1024).toFixed(1)} KB • {uploadSession.mimeType} • Checksum: {uploadSession.checksum.substring(0, 8)}
+                      </p>
+                    </div>
+                  </div>
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); clearSelection(); }}
+                    className="group/button inline-flex items-center justify-center border border-transparent bg-clip-padding text-sm font-medium whitespace-nowrap transition-all outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 aria-expanded:bg-muted aria-expanded:text-foreground dark:hover:bg-muted/50 size-7 text-muted-foreground hover:text-foreground hover:bg-muted shrink-0 rounded-md" 
+                    type="button"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" className="lucide lucide-x size-4" aria-hidden="true">
+                      <path d="M18 6 6 18"></path>
+                      <path d="m6 6 12 12"></path>
+                    </svg>
+                  </button>
+                </div>
+              )}
+
+              {selectedFile && detectedInstrument && !uploadSession && (
                 <div className="flex items-center justify-between gap-4 rounded-xl border bg-muted/40 p-3.5 shadow-sm">
                   <div className="flex items-center gap-3 overflow-hidden">
                     <div className="flex size-8 shrink-0 items-center justify-center rounded-lg border bg-background text-primary shadow-sm">
@@ -452,7 +511,7 @@ export function DataSection() {
               <Button variant="outline" onClick={() => handleOpenChange(false)} className="cursor-pointer">
                 Close
               </Button>
-              <Button onClick={handleOkClick} disabled={!selectedFile || isAnalyzing} className="cursor-pointer">
+              <Button onClick={handleOkClick} disabled={!selectedFile || isAnalyzing || !!uploadSession} className="cursor-pointer">
                 OK
               </Button>
             </DialogFooter>
