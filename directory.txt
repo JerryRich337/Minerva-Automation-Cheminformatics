@@ -368,4 +368,6 @@ src/styles/presets/tangerine.css
 src/types.d.ts
 tsconfig.json
 tsconfig.scripts.json
+src/utils/hplc-parser.ts
 src/components/data-section.tsx
+src/app/reports/[id]/page.tsx

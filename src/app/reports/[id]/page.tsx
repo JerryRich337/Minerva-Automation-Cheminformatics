@@ -4,8 +4,9 @@ import { useEffect, useState, use } from "react";
 import { useRouter } from "next/navigation";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import { ChevronRight, FileText, ArrowLeft, Layers, BarChart3, Table2, Sliders } from "lucide-react";
+import { ChevronRight, FileText, ArrowLeft, Layers, BarChart3, Table2, Sliders, FlaskConical } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { buildHPLCExperiment } from "@/utils/hplc-experiment-builder";
 
 interface ReportPageProps {
   params: Promise<{ id: string }>;
@@ -52,6 +53,8 @@ export default function ReportDetailPage({ params }: ReportPageProps) {
   }
 
   const hplc = report.parsedHPLCData;
+  // Generate the unified domain experiment layout structure dynamically if data exists
+  const experiment = hplc ? buildHPLCExperiment(hplc) : null;
 
   return (
     <div className="min-h-screen bg-background p-6 md:p-10 text-foreground">
@@ -151,6 +154,29 @@ export default function ReportDetailPage({ params }: ReportPageProps) {
                 </pre>
               </div>
             </details>
+
+            <div className="my-2 border-t border-muted-foreground/20" />
+
+            {/* DOMAIN WORKSPACE SECTION: HPLC EXPERIMENT SOURCE OF TRUTH */}
+            {experiment && (
+              <details className="group border-2 border-primary/20 rounded-xl bg-primary/5 transition-all" open>
+                <summary className="flex items-center justify-between p-4 font-semibold text-sm select-none cursor-pointer list-none text-primary [&::-webkit-details-marker]:hidden">
+                  <div className="flex items-center gap-3">
+                    <FlaskConical className="size-4" />
+                    <span>HPLC Experiment Domain Object (Source of Truth)</span>
+                  </div>
+                  <ChevronRight className="size-4 transition-transform group-open:rotate-90" />
+                </summary>
+                <div className="px-4 pb-4 pt-1 border-t border-primary/10 text-xs max-h-96 overflow-y-auto">
+                  <p className="text-muted-foreground mb-3 text-[11px]">
+                    Organized domain view grouping injection contexts (Samples: {experiment.samples.length}, Blanks: {experiment.blanks.length}, QCs: {experiment.qcInjections.length}, Standards: {experiment.calibrationStandards.length}).
+                  </p>
+                  <pre className="bg-background/80 p-3 rounded-lg text-foreground font-mono border">
+                    {JSON.stringify(experiment, null, 2)}
+                  </pre>
+                </div>
+              </details>
+            )}
 
           </div>
         ) : (
