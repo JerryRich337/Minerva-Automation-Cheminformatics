@@ -82,8 +82,6 @@ export function DataSection() {
       if (user) {
         setUserId(user.uid);
 
-        // NOTE: If files disappear on refresh, open your Browser Inspect Console.
-        // Firestore requires a composite index for combinations of where() + orderBy().
         const q = query(
           collection(db, "reports"), 
           where("userId", "==", user.uid), 
@@ -98,7 +96,6 @@ export function DataSection() {
           setReports(reportList);
         }, (error) => {
           console.error("CRITICAL FIRESTORE QUERY ERROR:", error.message);
-          console.error("Check if you need to create an index click the link inside your server logs terminal if visible.");
         });
 
         return () => unsubscribeSnapshot();
@@ -253,32 +250,48 @@ export function DataSection() {
     if (!selectedFile || !userId) return;
 
     try {
-      // 1. Create a reference to the collection
+      // Deduplication naming algorithm
+      const originalName = selectedFile.name;
+      const lastDotIndex = originalName.lastIndexOf(".");
+      
+      let baseName = originalName;
+      let extension = "";
+      
+      if (lastDotIndex !== -1) {
+        baseName = originalName.substring(0, lastDotIndex);
+        extension = originalName.substring(lastDotIndex); // includes the dot (e.g., ".csv")
+      }
+
+      let finalName = originalName;
+      let counter = 1;
+
+      // Extract existing report names for checking
+      const existingNames = reports.map(r => r.name);
+
+      // Sequentially find an available file index name variation
+      while (existingNames.includes(finalName)) {
+        finalName = `${baseName}(${counter})${extension}`;
+        counter++;
+      }
+
       const reportsCollection = collection(db, "reports");
 
-      // 2. Add the document to Firestore
       await addDoc(reportsCollection, {
-        name: selectedFile.name,
+        name: finalName,
         description: `Instrument: ${detectedInstrument || "Unknown Instrument"} | Size: ${(selectedFile.size / 1024).toFixed(2)} KB`,
         userId: userId,
-        createdAt: serverTimestamp(), // Ensures correct ordering on reload
+        createdAt: serverTimestamp(),
       });
 
-      // 3. Clear the file uploader inputs and close the dialog
       clearSelection();
       setOpen(false);
       
     } catch (error: any) {
       console.error("FIRESTORE WRITE ERROR:", error);
-      setErrorMessage(
-        error.message?.includes("permission-denied")
-          ? "Permission denied. Check your Firestore Security Rules."
-          : "Failed to save report. Open your browser console to check for missing index URLs."
-      );
+      setErrorMessage("Failed to save report. Open your browser console for tracking errors.");
     }
   };
 
-  // EXECUTING LOGIC HANDLERS
   const handleDeleteReport = async (e: React.MouseEvent, id: string) => {
     e.stopPropagation(); 
     e.preventDefault();
@@ -479,7 +492,6 @@ export function DataSection() {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-40">
-                    {/* Delete strictly mounted on top */}
                     <DropdownMenuItem 
                       onClick={(e) => handleDeleteReport(e, report.id)}
                       className="gap-2 cursor-pointer text-xs text-destructive focus:text-destructive focus:bg-destructive/5 font-medium"
@@ -488,7 +500,6 @@ export function DataSection() {
                       <span>Delete</span>
                     </DropdownMenuItem>
                     
-                    {/* Share mounted directly underneath */}
                     <DropdownMenuItem 
                       onClick={(e) => handleShareReport(e, report)}
                       className="gap-2 cursor-pointer text-xs font-medium"
