@@ -13,6 +13,14 @@ export interface ExperimentSummary {
   generatedAt: string;
 }
 
+export interface HPLCWorkspace {
+  readonly experiment: HPLCExperiment;
+  readonly validation: ValidationResult;
+  readonly summary: ExperimentSummary;
+  readonly visualizationData: any;
+  readonly builtAt: string;
+}
+
 /**
  * Generates non-interpretive factual metadata summaries directly from structural experiment states.
  */
@@ -22,7 +30,6 @@ export function generateHPLCSummary(
 ): ExperimentSummary {
   const metadata = experiment.globalMetadata || {};
 
-  // Find maximum timestamp/runtime value to state overall analytical session scale
   let maxDuration = 0;
   if (Array.isArray(experiment.chromatogramData)) {
     experiment.chromatogramData.forEach((pt) => {
@@ -44,4 +51,35 @@ export function generateHPLCSummary(
     method: metadata.method || metadata.Method || "Default Separation Profile",
     generatedAt: new Date().toISOString()
   };
+}
+
+/**
+ * HPLCWorkspaceBuilder: Combines experiment, validation, summary, and visualization data
+ * into a single, fully frozen, immutable workspace object snapshot.
+ */
+export function buildHPLCWorkspace(
+  experiment: HPLCExperiment,
+  validation: ValidationResult,
+  visualizationData: any
+): HPLCWorkspace {
+  const summary = generateHPLCSummary(experiment, validation);
+
+  const workspace: HPLCWorkspace = {
+    experiment,
+    validation,
+    summary,
+    visualizationData,
+    builtAt: new Date().toISOString()
+  };
+
+  // Enforce deep structural immutability via recursive freezing
+  const deepFreeze = (obj: any): any => {
+    if (obj && typeof obj === "object") {
+      Object.freeze(obj);
+      Object.getOwnPropertyNames(obj).forEach((prop) => deepFreeze(obj[prop]));
+    }
+    return obj;
+  };
+
+  return deepFreeze(workspace);
 }

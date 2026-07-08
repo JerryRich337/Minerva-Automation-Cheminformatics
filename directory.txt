@@ -371,3 +371,8 @@ tsconfig.scripts.json
 src/utils/hplc-parser.ts
 src/components/data-section.tsx
 src/app/reports/[id]/page.tsx
+src/utils/hplc-experiment-builder.ts
+src/utils/hplc-parser.ts
+src/utils/hplc-summary-engine.ts
+src/utils/hplc-validation-engine.ts
+src/utils/hplc-visualization-engine.ts
