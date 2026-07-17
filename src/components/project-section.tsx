@@ -41,47 +41,79 @@ export function ProjectSection() {
   const [description, setDescription] = useState("");
   const [projects, setProjects] = useState<Project[]>([]);
   const [userId, setUserId] = useState<string | null>(null);
+  const [isAuthReady, setIsAuthReady] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const router = useRouter();
 
   useEffect(() => {
+    let unsubscribeSnapshot: (() => void) | null = null;
+
     const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
+      unsubscribeSnapshot?.();
+      unsubscribeSnapshot = null;
+
       if (user) {
         setUserId(user.uid);
 
         const q = query(collection(db, "projects"), where("userId", "==", user.uid), orderBy("createdAt", "desc"));
 
-        const unsubscribeSnapshot = onSnapshot(q, (snapshot) => {
+        unsubscribeSnapshot = onSnapshot(q, (snapshot) => {
           const projectList: Project[] = [];
           snapshot.forEach((document) => {
             projectList.push({ id: document.id, ...document.data() } as Project);
           });
           setProjects(projectList);
+          setErrorMessage(null);
+        }, (error) => {
+          console.error("CRITICAL FIRESTORE PROJECT QUERY ERROR:", error.message);
+          if (error.code === "permission-denied") {
+            setErrorMessage("Firestore denied access to your projects. This client is authenticated; the remaining blocker is your Firestore rules for the projects collection.");
+          }
         });
-
-        return () => unsubscribeSnapshot();
+      } else {
+        setUserId(null);
+        setProjects([]);
       }
+
+      setIsAuthReady(true);
     });
 
-    return () => unsubscribeAuth();
+    return () => {
+      unsubscribeSnapshot?.();
+      unsubscribeAuth();
+    };
   }, []);
 
   const handleOkClick = async () => {
-    if (!projectName.trim() || !userId) return;
+    if (!projectName.trim()) return;
+
+    const currentUser = auth.currentUser;
+    if (!currentUser) {
+      setErrorMessage("Your session is not ready. Sign in again before creating a project.");
+      return;
+    }
 
     try {
       const docRef = await addDoc(collection(db, "projects"), {
         name: projectName,
         description: description,
-        userId: userId,
+        userId: currentUser.uid,
         createdAt: new Date(),
       });
 
       setProjectName("");
       setDescription("");
+      setErrorMessage(null);
       setOpen(false);
       router.push(`/dashboard/projects/${docRef.id}`);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error adding project: ", error);
+      if (error?.code === "permission-denied") {
+        setErrorMessage("Firestore denied the project write. Your signed-in user is ready, so the remaining blocker is your Firestore rules for the projects collection.");
+        return;
+      }
+
+      setErrorMessage("Failed to create project. Open your browser console for tracking errors.");
     }
   };
 
@@ -109,7 +141,7 @@ export function ProjectSection() {
 
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
-            <Button size="sm" className="gap-1 cursor-pointer">
+            <Button size="sm" className="gap-1 cursor-pointer" disabled={!isAuthReady || !userId}>
               <Plus className="size-4" />
               New Project
             </Button>
@@ -146,13 +178,19 @@ export function ProjectSection() {
               <Button variant="outline" onClick={() => setOpen(false)} className="cursor-pointer">
                 Close
               </Button>
-              <Button onClick={handleOkClick} className="cursor-pointer">
+              <Button onClick={handleOkClick} disabled={!isAuthReady || !userId || !projectName.trim()} className="cursor-pointer">
                 OK
               </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
       </div>
+
+      {errorMessage && (
+        <div className="rounded-lg border border-destructive/10 bg-destructive/5 px-3 py-2 text-xs font-medium text-destructive">
+          {errorMessage}
+        </div>
+      )}
 
       {projects.length === 0 ? (
         <div className="flex h-32 items-center justify-center rounded-lg border border-dashed bg-muted/20">
