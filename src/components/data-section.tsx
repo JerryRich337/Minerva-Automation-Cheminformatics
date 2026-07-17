@@ -75,6 +75,7 @@ export function DataSection() {
   const [open, setOpen] = useState(false);
   const [reports, setReports] = useState<Report[]>([]);
   const [userId, setUserId] = useState<string | null>(null);
+  const [isAuthReady, setIsAuthReady] = useState(false);
   
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [uploadSession, setUploadSession] = useState<UploadSession | null>(null);
@@ -89,7 +90,12 @@ export function DataSection() {
   const router = useRouter();
 
   useEffect(() => {
+    let unsubscribeSnapshot: (() => void) | null = null;
+
     const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
+      unsubscribeSnapshot?.();
+      unsubscribeSnapshot = null;
+
       if (user) {
         setUserId(user.uid);
 
@@ -99,7 +105,7 @@ export function DataSection() {
           orderBy("createdAt", "desc")
         );
 
-        const unsubscribeSnapshot = onSnapshot(q, (snapshot) => {
+        unsubscribeSnapshot = onSnapshot(q, (snapshot) => {
           const reportList: Report[] = [];
           snapshot.forEach((document) => {
             reportList.push({ id: document.id, ...document.data() } as Report);
@@ -108,15 +114,18 @@ export function DataSection() {
         }, (error) => {
           console.error("CRITICAL FIRESTORE QUERY ERROR:", error.message);
         });
-
-        return () => unsubscribeSnapshot();
       } else {
         setUserId(null);
         setReports([]);
       }
+
+      setIsAuthReady(true);
     });
 
-    return () => unsubscribeAuth();
+    return () => {
+      unsubscribeSnapshot?.();
+      unsubscribeAuth();
+    };
   }, []);
 
   const analyzeInstrument = (file: File) => {
@@ -286,7 +295,13 @@ export function DataSection() {
   };
 
   const handleOkClick = async () => {
-    if (!selectedFile || !userId || !uploadSession) return;
+    if (!selectedFile || !uploadSession) return;
+
+    const currentUser = auth.currentUser;
+    if (!currentUser) {
+      setErrorMessage("Your session is not ready. Sign in again before saving a report.");
+      return;
+    }
 
     try {
       const originalName = uploadSession.filename;
@@ -320,7 +335,7 @@ export function DataSection() {
       const docRef = await addDoc(reportsCollection, {
         name: finalName,
         description: `Instrument: ${detectedInstrument || "Unknown Instrument"} | Size: ${(uploadSession.size / 1024).toFixed(2)} KB | Checksum: ${uploadSession.checksum.substring(0, 8)}`,
-        userId: userId,
+        userId: currentUser.uid,
         createdAt: serverTimestamp(),
         // Append the nested raw structured blocks safely into the report record
         parsedHPLCData: parsedHPLCData
@@ -334,6 +349,12 @@ export function DataSection() {
       
     } catch (error: any) {
       console.error("FIRESTORE WRITE ERROR:", error);
+
+      if (error?.code === "permission-denied") {
+        setErrorMessage("Firestore denied the report write. Your signed-in user is ready, so the remaining blocker is your Firestore rules for the reports collection.");
+        return;
+      }
+
       setErrorMessage("Failed to save report. Open your browser console for tracking errors.");
     }
   };
@@ -375,7 +396,7 @@ export function DataSection() {
 
         <Dialog open={open} onOpenChange={handleOpenChange}>
           <DialogTrigger asChild>
-            <Button size="sm" className="gap-1 cursor-pointer">
+            <Button size="sm" className="gap-1 cursor-pointer" disabled={!isAuthReady || !userId}>
               <Plus className="size-4" />
               New Report
             </Button>
@@ -525,7 +546,7 @@ export function DataSection() {
               <Button variant="outline" onClick={() => handleOpenChange(false)} className="cursor-pointer">
                 Close
               </Button>
-              <Button onClick={handleOkClick} disabled={!selectedFile || isAnalyzing || !uploadSession} className="cursor-pointer">
+              <Button onClick={handleOkClick} disabled={!selectedFile || isAnalyzing || !uploadSession || !isAuthReady || !userId} className="cursor-pointer">
                 OK
               </Button>
             </DialogFooter>
